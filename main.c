@@ -2,8 +2,22 @@
 #include <stdlib.h>
 #include <string.h>
 
+// 定义最大字符串长度
 #define MAX_NAME_LENGTH 50
-#define MAX_STUDENTS 100000
+
+// 特定字符串用于读取标记
+#define STUDENT_START "##StudentStart##"
+#define STUDENT_END "##StudentEnd##"
+#define SCORE_START "##ScoreStart##"
+#define SCORE_END "##ScoreEnd##"
+#define PROJECT_START "##ProjectStart##"
+#define PROJECT_END "##ProjectEnd##"
+#define PAPER_START "##PaperStart##"
+#define PAPER_END "##PaperEnd##"
+#define COMPETITION_START "##CompetitionStart##"
+#define COMPETITION_END "##CompetitionEnd##"
+#define ADMIN_START "##AdminStart##"
+#define ADMIN_END "##AdminEnd##"
 
 // 学业成绩结构体
 typedef struct AcademicScoreNode {
@@ -53,15 +67,15 @@ typedef struct StudentInfo {
     char name[15];// 姓名
     char password[15];// 密码
     int classNumber;// 班级
-    AcademicScoreNode *academicScores;// 学业成绩
-    InnovationProject *innovationProjects;// 大学生创新创业计划项目
-    AcademicPaper *academicPapers;// 学术论文
-    Competition *competitions;// 计算机类学科竞赛
     float gpa;  // 学业GPA
     float totalCredit;// 总学分
     float qualityGpa;// 素质加分GPA
     float averageScore;// 加权平均分
     float totalGPA;// 总绩点
+    AcademicScoreNode *academicScores;// 学业成绩
+    InnovationProject *innovationProjects;// 大学生创新创业计划项目
+    AcademicPaper *academicPapers;// 学术论文
+    Competition *competitions;// 计算机类学科竞赛
     struct StudentInfo *next;// 指向下一个学生的指针
 } StudentInfo;
 
@@ -122,6 +136,18 @@ void addAdminAccount();//添加管理员账号
 float calculatePaperGPA(AcademicPaper *paper);//计算学术论文加分
 float calculateCompetitionGPA(Competition *competition);//计算计算机类学科竞赛加分
 float calculateInnovationProjectGPA(InnovationProject *project);//计算大学生创新创业计划项目加分
+void calculateQualityGPA(StudentInfo *student);//计算素质加分GPA
+void displayInnovationProjects(StudentInfo *student);//显示大学生创新创业计划项目
+void displayAcademicPapers(StudentInfo *student);//显示学术论文
+void displayCompetitions(StudentInfo *student);//显示计算机类学科竞赛
+void modifyInnovationProject(StudentInfo *student);//修改大学生创新创业计划项目
+void modifyAcademicPaper(StudentInfo *student);//修改学术论文
+void modifyCompetition(StudentInfo *student);//修改计算机类学科竞赛
+void deleteInnovationProject(StudentInfo *student);//删除大学生创新创业计划项目
+void deleteAcademicPaper(StudentInfo *student);//删除学术论文
+void deleteCompetition(StudentInfo *student);//删除计算机类学科竞赛
+
+
 // 主函数
 int main() {
     // 初始化管理员信息,用户名和密码均为admin
@@ -135,8 +161,10 @@ int main() {
     strcpy(admin->password, "admin");
     admin->next = NULL;
     adminsList = admin;
+    loadFromFile();
     // 进入系统
     loginSystem();
+    saveToFile();
     return 0;
 }
 
@@ -240,16 +268,19 @@ void addQualityProject(StudentInfo *student) {
         case 1:{
             InnovationProject *newProject = createInnovationProject();
             insertInnovationProject(student, newProject);
+            addQualityProject(student);
             break;
         }
         case 2:{
             AcademicPaper *newPaper = createAcademicPaper();
             insertAcademicPaper(student, newPaper);
+            addQualityProject(student);
             break;
         }
         case 3:{
             Competition *newCompetition = createCompetition();
             insertCompetition(student, newCompetition);
+            addQualityProject(student);
             break;
         }
         case 4:{
@@ -537,6 +568,7 @@ void displayStudentMenu(StudentInfo *student) {
         }
     } while (choice != 4);
 }
+
 // 释放学生内存
 void freeMemory(StudentInfo **head) {
     // 检查学生列表头指针是否为空
@@ -560,6 +592,7 @@ void freeMemory(StudentInfo **head) {
             InnovationProject *temp = currentProject;
             free(temp); // 释放节点内存
         }
+
         // 释放学术论文链表中的每个节点
         AcademicPaper *currentPaper = currentStudent->academicPapers;
         while (currentPaper != NULL) {
@@ -567,6 +600,7 @@ void freeMemory(StudentInfo **head) {
             currentPaper = currentPaper->next;
             free(temp); // 释放节点内存
         }
+
         // 释放计算机类学科竞赛链表中的每个节点
         Competition *currentCompetition = currentStudent->competitions;
         while (currentCompetition != NULL) {
@@ -574,7 +608,6 @@ void freeMemory(StudentInfo **head) {
             currentCompetition = currentCompetition->next;
             free(temp); // 释放节点内存
         }
-
 
         // 释放当前学生节点的内存
         StudentInfo *tempStudent = currentStudent;
@@ -632,6 +665,7 @@ void insertInnovationProject(StudentInfo *student, InnovationProject *project) {
     if (current == NULL) {
         // 如果学生的项目链表为空，则新节点成为第一个节点
         student->innovationProjects = project;
+        printf("大学生创新创业项目录入成功");
     } else {
         printf("已经存在大学生创新创业计划项目");
     }
@@ -656,6 +690,7 @@ void insertAcademicPaper(StudentInfo *student, AcademicPaper *paper) {
         // 将新节点添加到链表的末尾
         current->next = paper;
     }
+    printf("论文录入成功");
 }
 
 // 插入计算机类学科竞赛
@@ -677,6 +712,7 @@ void insertCompetition(StudentInfo *student, Competition *competition) {
         // 将新节点添加到链表的末尾
         current->next = competition;
     }
+    printf("竞赛录入成功");
 }
 
 // 计算GPA、总学分、加权平均分、总绩点
@@ -832,15 +868,18 @@ StudentInfo *createStudent() {
             printf("请输入第%d门课程信息：\n", i + 1);
             addCourse(newStudent);
         }
+        calculateGPA(newStudent);
     }
 
     int choice2;
     printf("是否现在录入素质加分项目记录？(1. 是 2. 否): ");
     scanf("%d", &choice2);
     if(choice2 == 1){
-        printf("录入");
+        //录入素质加分项目
+        addQualityProject(newStudent);
+        calculateQualityGPA(newStudent);
+        calculateGPA(newStudent);
     }
-
     // 返回新创建的StudentInfo指针
     return newStudent;
 }
@@ -871,7 +910,6 @@ AcademicScoreNode *createAcademicScore() {
         // 返回新创建的AcademicScoreNode指针
         return newCourse;
 }
-
 
 // 创建新大学生创新创业计划项目
 InnovationProject *createInnovationProject() {
@@ -1143,6 +1181,44 @@ void modifyQualityScore(StudentInfo *student) {
     scanf("%d", &choice);
     // 根据用户选择执行相应操作
     switch (choice) {
+        case 1:{
+            // 修改大学生创新创业项目
+            modifyInnovationProject(student);
+            break;
+        }
+        case 2:{
+            // 删除大学生创新创业项目
+            deleteInnovationProject(student);
+            break;
+        }
+        case 3:{
+            // 修改学术论文
+            modifyAcademicPaper(student);
+            break;
+        }
+        case 4:{
+            // 删除学术论文
+            deleteAcademicPaper(student);
+            break;
+        }
+        case 5:{
+            // 修改计算机类学科竞赛
+            modifyCompetition(student);
+            break;
+        }
+        case 6:{
+            // 删除计算机类学科竞赛
+            deleteCompetition(student);
+            break;
+        }
+        case 7:{
+            printf("返回上一级菜单。\n");
+            // 返回上一级菜单
+            break;
+        }
+        default: {
+            printf("无效的选项。\n");
+        }
 
     }
 }
@@ -1174,19 +1250,9 @@ void displayQualityScore(StudentInfo *student) {
         printf("学生信息为空。\n");
         return;
     }
-    // 显示大学生创新创业计划项目
-    InnovationProject *currentProject = student->innovationProjects;
-    if (currentProject == NULL) {
-        printf("学生没有大学生创新创业计划项目。\n");
-    } else {
-        printf("大学生创新创业计划项目：\n");
-        if (currentProject != NULL) {
-            printf("项目名称: %s, 加分: %.2f\n", currentProject->projectName, currentProject->gpa);
-        }else{
-            printf("无大学生创新创业计划项目。\n");
-        }
-    }
-    printf("所有素质加分已全部显示完成。\n");
+    displayInnovationProjects(student);//显示大学生创新创业计划项目
+    displayAcademicPapers(student);//显示学术论文
+    displayCompetitions(student);//显示计算机类学科竞赛
 }
 
 //释放管理员内存
@@ -1300,10 +1366,938 @@ void addAdminAccount() {
 
 // 保存到文件
 void saveToFile() {
+    FILE *file = fopen("student.txt", "w");
+    if (file == NULL) {
+        handleInputError("打开文件失败");
+        return;
+    }
 
+    StudentInfo *currentStudent = studentsList;
+    while (currentStudent != NULL) {
+        // 学生记录开始
+        fprintf(file, "%s\n", STUDENT_START);
+
+//        char studentID[8];// 学号
+//        char name[15];// 姓名
+//        char password[15];// 密码
+//        int classNumber;// 班级
+//        float gpa;  // 学业GPA
+//        float totalCredit;// 总学分
+//        float qualityGpa;// 素质加分GPA
+//        float averageScore;// 加权平均分
+//        float totalGPA;// 总绩点
+
+        // 写入学生个人信息
+        fprintf(file, "StudentID: %s\n", currentStudent->studentID);// 学号
+        fprintf(file, "Name: %s\n", currentStudent->name);// 姓名
+        fprintf(file, "Password: %s\n", currentStudent->password);// 密码
+        fprintf(file, "ClassNumber: %d\n", currentStudent->classNumber);// 班级
+        fprintf(file, "GPA: %f\n", currentStudent->gpa);// 学业GPA
+        fprintf(file, "TotalCredit: %.2f\n", currentStudent->totalCredit);// 总学分
+        fprintf(file, "QualityGPA: %.2f\n", currentStudent->qualityGpa);// 素质加分GPA
+        fprintf(file, "AverageScore: %f\n", currentStudent->averageScore);// 加权平均分
+        fprintf(file, "TotalGPA: %f\n", currentStudent->totalGPA);// 总绩点
+
+//        char courseName[MAX_NAME_LENGTH];
+//        float score;    // 分数
+//        float credit; // 学分
+//        float gpa; // 单门课程绩点
+        // 学业成绩链表
+        if (currentStudent->academicScores != NULL) {
+            fprintf(file, "%s\n", SCORE_START);
+            AcademicScoreNode *currentScore = currentStudent->academicScores;
+            while (currentScore != NULL) {
+                fprintf(file, "CourseName: %s\n", currentScore->courseName);
+                fprintf(file, "Score: %f\n", currentScore->score);
+                fprintf(file, "Credit: %.2f\n", currentScore->credit);
+                fprintf(file, "GPA: %.2f\n", currentScore->gpa);
+                currentScore = currentScore->next;
+            }
+            fprintf(file, "%s\n", SCORE_END);
+        }
+
+//        char projectName[MAX_NAME_LENGTH]; // 项目名称
+//        float gpa; // 加分值
+//        int isLeaderOrSecondLeader;// 是否为项目负责人,是否为第二负责人，国家级优秀结题项目负责人加0.1 GPA，第二名加0.05 GPA
+//        char projectLevel[10];// 项目级别，国家级，省级，校级
+//        int isFinished;    // 是否结题
+        // 大学生创新创业计划项目链表
+        if (currentStudent->innovationProjects != NULL) {
+            fprintf(file, "%s\n", PROJECT_START);
+            InnovationProject *currentProject = currentStudent->innovationProjects;
+            if(currentProject != NULL) {
+                fprintf(file, "ProjectName: %s\n", currentProject->projectName);
+                fprintf(file, "GPA: %.2f\n", currentProject->gpa);
+                fprintf(file, "LeaderOrSecondLeader: %d\n", currentProject->isLeaderOrSecondLeader);
+                fprintf(file, "ProjectLevel: %s\n", currentProject->projectLevel);
+                fprintf(file, "IsFinished: %d\n", currentProject->isFinished);
+            }
+            fprintf(file, "%s\n", PROJECT_END);
+        }
+
+//        char title[MAX_NAME_LENGTH]; // 论文标题
+//        char journalName[MAX_NAME_LENGTH]; // 期刊名称
+//        int isFirstAuthor; // 是否为第一作者
+//
+//        //期刊级别，顶级加0.4，一级期刊加0.2 GPA，二级期刊加0.1 GPA，三级期刊加0.05 GPA，四级期刊加0.02 GPA，五级期刊加0.01 GPA
+//        int journalLevel;
+//
+//        float gpa; // 加分值
+        // 学术论文链表
+        if (currentStudent->academicPapers != NULL) {
+            fprintf(file, "%s\n", PAPER_START);
+            AcademicPaper *currentPaper = currentStudent->academicPapers;
+            while (currentPaper != NULL) {
+                fprintf(file, "Title: %s\n", currentPaper->title);
+                fprintf(file, "JournalName: %s\n", currentPaper->journalName);
+                fprintf(file, "IsFirstAuthor: %d\n", currentPaper->isFirstAuthor);
+                fprintf(file, "JournalLevel: %d\n", currentPaper->journalLevel);
+                fprintf(file, "GPA: %.2f\n", currentPaper->gpa);
+                currentPaper = currentPaper->next;
+            }
+            fprintf(file, "%s\n", PAPER_END);
+        }
+
+//        char competitionName[MAX_NAME_LENGTH]; // 竞赛名称
+//        int teamSize;   //参赛队伍人数
+//        char competitionLevel[10]; // 竞赛级别,国家级，省级，校级
+//        int rank;   // 获奖等级，1表示一等奖，2表示二等奖，3表示三等奖
+//        char competitionType;   //竞赛类别，A类，B类，C类
+//        float gpa; // 加分值
+        // 计算机类学科竞赛链表
+        if (currentStudent->competitions != NULL) {
+            fprintf(file, "%s\n", COMPETITION_START);
+            Competition *currentCompetition = currentStudent->competitions;
+            while (currentCompetition != NULL) {
+                fprintf(file, "CompetitionName: %s\n", currentCompetition->competitionName);
+                fprintf(file, "TeamSize: %d\n", currentCompetition->teamSize);
+                fprintf(file, "CompetitionLevel: %s\n", currentCompetition->competitionLevel);
+                fprintf(file, "Rank: %d\n", currentCompetition->rank);
+                fprintf(file, "CompetitionType: %c\n", currentCompetition->competitionType);
+                fprintf(file, "GPA: %.2f\n", currentCompetition->gpa);
+                currentCompetition = currentCompetition->next;
+            }
+            fprintf(file, "%s\n", COMPETITION_END);
+        }
+
+        // 学生记录结束
+        fprintf(file, "%s\n", STUDENT_END);
+
+        currentStudent = currentStudent->next;
+    }
+    fclose(file);//关闭文件
+
+    // 保存管理员信息
+    FILE *adminFile = fopen("admin.txt", "w");
+    if (adminFile == NULL) {
+        handleInputError("打开文件失败");
+        return;
+    }
+    AdminInfo *currentAdmin = adminsList;
+    while (currentAdmin != NULL) {
+        fprintf(adminFile, "%s\n", ADMIN_START);
+        fprintf(adminFile, "Username: %s\n", currentAdmin->username);
+        fprintf(adminFile, "Password: %s\n", currentAdmin->password);
+        fprintf(adminFile, "%s\n", ADMIN_END);
+        currentAdmin = currentAdmin->next;
+    }
+    fclose(adminFile);//关闭文件
 }
 
 // 从文件加载
 void loadFromFile() {
+    FILE *file = fopen("student.txt", "r");
+    if (file == NULL) {
+        handleInputError("打开文件失败");
+        return;
+    }
 
+    freeMemory(&studentsList); // 清空学生链表
+
+    char buffer[1024];// 用于存储读取的每行数据
+    while (fgets(buffer, sizeof(buffer), file)) {
+        if (strncmp(buffer, STUDENT_START, strlen(STUDENT_START)) == 0) {
+            // 创建新的学生节点
+            StudentInfo *newStudent = (StudentInfo *)malloc(sizeof(StudentInfo));
+            if (newStudent == NULL) {
+                handleInputError("内存分配失败");
+                break;
+            }
+            memset(newStudent, 0, sizeof(StudentInfo));
+
+            // 读取学生个人信息
+            fgets(buffer, sizeof(buffer), file);
+            sscanf(buffer, "StudentID: %s", newStudent->studentID);
+            fgets(buffer, sizeof(buffer), file);
+            sscanf(buffer, "Name: %s", newStudent->name);
+            fgets(buffer, sizeof(buffer), file);
+            sscanf(buffer, "Password: %s", newStudent->password);
+            fgets(buffer, sizeof(buffer), file);
+            sscanf(buffer, "ClassNumber: %d", &newStudent->classNumber);
+            fgets(buffer, sizeof(buffer), file);
+            sscanf(buffer, "GPA: %f", &newStudent->gpa);
+            fgets(buffer, sizeof(buffer), file);
+            sscanf(buffer, "TotalCredit: %2f", &newStudent->totalCredit);
+            fgets(buffer, sizeof(buffer), file);
+            sscanf(buffer, "QualityGPA: %f", &newStudent->qualityGpa);
+            fgets(buffer, sizeof(buffer), file);
+            sscanf(buffer, "AverageScore: %f", &newStudent->averageScore);
+            fgets(buffer, sizeof(buffer), file);
+            sscanf(buffer, "TotalGPA: %f", &newStudent->totalGPA);
+
+            // 将新节点添加到学生链表中
+            insertStudent(&studentsList, newStudent);
+
+            // 读取学业成绩链表
+            while (fgets(buffer, sizeof(buffer), file) && strncmp(buffer, SCORE_END, strlen(SCORE_END)) != 0) {
+                AcademicScoreNode *newScore = (AcademicScoreNode *)malloc(sizeof(AcademicScoreNode));
+                if (newScore == NULL) {
+                    handleInputError("内存分配失败");
+                    break;
+                }
+                memset(newScore, 0, sizeof(AcademicScoreNode));
+                fgets(buffer, sizeof(buffer), file);
+                sscanf(buffer, "CourseName: %s", newScore->courseName);
+                fgets(buffer, sizeof(buffer), file);
+                sscanf(buffer, "Score: %f", &newScore->score);
+                fgets(buffer, sizeof(buffer), file);
+                sscanf(buffer, "Credit: %2f", &newScore->credit);
+                fgets(buffer, sizeof(buffer), file);
+                sscanf(buffer, "GPA: %2f", &newScore->gpa);
+                newScore->next = newStudent->academicScores;
+                newStudent->academicScores = newScore;
+            }
+
+            // 读取大学生创新创业计划项目链表
+            if (fgets(buffer, sizeof(buffer), file) && strncmp(buffer, PROJECT_START, strlen(PROJECT_START)) == 0) {
+                InnovationProject *newProject = (InnovationProject *)malloc(sizeof(InnovationProject));
+                if (newProject == NULL) {
+                    handleInputError("内存分配失败");
+                    break;
+                }
+                memset(newProject, 0, sizeof(InnovationProject));
+                newStudent->innovationProjects = newProject;
+
+                fgets(buffer, sizeof(buffer), file);
+                sscanf(buffer, "ProjectName: %s", newProject->projectName);
+                fgets(buffer, sizeof(buffer), file);
+                sscanf(buffer, "GPA: %2f", &newProject->gpa);
+                fgets(buffer, sizeof(buffer), file);
+                sscanf(buffer, "LeaderOrSecondLeader: %d", &newProject->isLeaderOrSecondLeader);
+                fgets(buffer, sizeof(buffer), file);
+                sscanf(buffer, "ProjectLevel: %s", newProject->projectLevel);
+                fgets(buffer, sizeof(buffer), file);
+                sscanf(buffer, "IsFinished: %d", &newProject->isFinished);
+            }
+
+            // 读取学术论文链表
+            while (fgets(buffer, sizeof(buffer), file) && strncmp(buffer, PAPER_END, strlen(PAPER_END)) != 0) {
+                AcademicPaper *newPaper = (AcademicPaper *)malloc(sizeof(AcademicPaper));
+                if (newPaper == NULL) {
+                    handleInputError("内存分配失败");
+                    break;
+                }
+                memset(newPaper, 0, sizeof(AcademicPaper));
+                fgets(buffer, sizeof(buffer), file);
+                sscanf(buffer, "Title: %s", newPaper->title);
+                fgets(buffer, sizeof(buffer), file);
+                sscanf(buffer, "JournalName: %s", newPaper->journalName);
+                fgets(buffer, sizeof(buffer), file);
+                sscanf(buffer, "IsFirstAuthor: %d", &newPaper->isFirstAuthor);
+                fgets(buffer, sizeof(buffer), file);
+                sscanf(buffer, "JournalLevel: %d", &newPaper->journalLevel);
+                fgets(buffer, sizeof(buffer), file);
+                sscanf(buffer, "GPA: %2f", &newPaper->gpa);
+                newPaper->next = newStudent->academicPapers;
+                newStudent->academicPapers = newPaper;
+            }
+
+            // 读取计算机类学科竞赛链表
+            while (fgets(buffer, sizeof(buffer), file) && strncmp(buffer, COMPETITION_END, strlen(COMPETITION_END)) != 0) {
+                Competition *newCompetition = (Competition *)malloc(sizeof(Competition));
+                if (newCompetition == NULL) {
+                    handleInputError("内存分配失败");
+                    break;
+                }
+                memset(newCompetition, 0, sizeof(Competition));
+                fgets(buffer, sizeof(buffer), file);
+                sscanf(buffer, "CompetitionName: %s", newCompetition->competitionName);
+                fgets(buffer, sizeof(buffer), file);
+                sscanf(buffer, "TeamSize: %d", &newCompetition->teamSize);
+                fgets(buffer, sizeof(buffer), file);
+                sscanf(buffer, "CompetitionLevel: %s", newCompetition->competitionLevel);
+                fgets(buffer, sizeof(buffer), file);
+                sscanf(buffer, "Rank: %d", &newCompetition->rank);
+                fgets(buffer, sizeof(buffer), file);
+                sscanf(buffer, "CompetitionType: %c", &newCompetition->competitionType);
+                fgets(buffer, sizeof(buffer), file);
+                sscanf(buffer, "GPA: %2f", &newCompetition->gpa);
+                newCompetition->next = newStudent->competitions;
+                newStudent->competitions = newCompetition;
+            }
+            // 跳过学生记录结束标记
+            fgets(buffer, sizeof(buffer), file);
+        }
+    }
+    fclose(file); // 关闭文件
+
+    // 加载管理员信息
+    FILE *adminFile = fopen("admin.txt", "r");
+    if (adminFile == NULL) {
+        handleInputError("打开文件失败");
+        return;
+    }
+    freeAdminMemory(&adminsList); // 清空管理员链表
+
+    while (fgets(buffer, sizeof(buffer), adminFile)) {
+        if (strncmp(buffer, ADMIN_START, strlen(ADMIN_START)) == 0) {
+            AdminInfo *newAdmin = (AdminInfo *)malloc(sizeof(AdminInfo));
+            if (newAdmin == NULL) {
+                handleInputError("内存分配失败");
+                break;
+            }
+            memset(newAdmin, 0, sizeof(AdminInfo));
+            fgets(buffer, sizeof(buffer), adminFile);
+            sscanf(buffer, "Username: %s", newAdmin->username);
+            fgets(buffer, sizeof(buffer), adminFile);
+            sscanf(buffer, "Password: %s", newAdmin->password);
+            newAdmin->next = adminsList;
+            adminsList = newAdmin;
+        }
+    }
+    fclose(adminFile); // 关闭文件
+}
+
+// 计算并更新学生的素质加分GPA
+void calculateQualityGPA(StudentInfo *student) {
+    // 计算并更新学生的素质加分GPA
+
+    if (student == NULL) {
+        return; // 如果传入的学生指针为空，则直接返回
+    }
+    float totalQualityPoints = 0.00f; // 用于累加素质加分GPA值
+    float gpa1 = 0.00f; // 用于大学生创新创业项目加分GPA
+    float gpa2 = 0.00f; // 用于学术论文所加最大值
+    float gpa3 = 0.00f; // 用于大学生创新创业计划项目所加最大值
+
+    // 学生的大学生创新创业计划项目链表
+    InnovationProject *currentProject = student->innovationProjects;
+    if (currentProject != NULL) {
+        gpa1 = currentProject->gpa; // 累加每个项目的GPA值
+    }
+
+    // 学生的学术论文链表
+    AcademicPaper *currentPaper = student->academicPapers;
+    while (currentPaper != NULL) {
+        if(currentPaper->gpa > gpa2){
+            gpa2 = currentPaper->gpa;
+        }
+        currentPaper = currentPaper->next; // 移动到下一个论文节点
+    }
+
+    // 学生的计算机类学科竞赛链表
+    Competition *currentCompetition = student->competitions;
+    while (currentCompetition != NULL) {
+        if(currentCompetition->gpa > gpa3){
+            gpa3 = currentCompetition->gpa;
+        }
+        currentCompetition = currentCompetition->next; // 移动到下一个竞赛节点
+    }
+    totalQualityPoints = gpa1 + gpa2 + gpa3;
+    student->qualityGpa = totalQualityPoints; // 总素质加分GPA
+}
+
+// 计算大学生创新创业计划项目加分GPA
+float calculateInnovationProjectGPA(InnovationProject *project) {
+    // 根据项目级别和是否结题计算加分GPA
+    float gpa = 0.00f;
+    if (project == NULL) {
+        return gpa; // 如果传入的项目指针为空，则直接返回
+    }
+if (project->isFinished == 1) {
+        // 如果项目已结题，根据项目级别计算加分GPA
+        if (strcmp(project->projectLevel, "国家级") == 0) {
+            //第一负责人
+            if (project->isLeaderOrSecondLeader == 1) {
+                gpa = 0.10f;
+            } else if(project->isLeaderOrSecondLeader == 2) {
+                gpa = 0.05f;
+            }
+        }
+    }
+    return gpa;
+}
+
+// 计算学术论文加分GPA
+float calculatePaperGPA(AcademicPaper *paper) {
+    // 根据期刊级别和是否为第一作者计算加分GPA
+    float gpa = 0.00f;
+    if (paper == NULL) {
+        return gpa; // 如果传入的论文指针为空，则直接返回
+    }
+    if (paper->isFirstAuthor == 1) {
+        // 如果是第一作者，根据期刊级别计算加分GPA
+        switch (paper->journalLevel) {
+            case 1:
+                gpa = 0.40f;
+                break;
+            case 2:
+                gpa = 0.20f;
+                break;
+            case 3:
+                gpa = 0.10f;
+                break;
+            case 4:
+                gpa = 0.05f;
+                break;
+            case 5:
+                gpa = 0.02f;
+                break;
+            case 6:
+                gpa = 0.01f;
+                break;
+            default:
+                gpa = 0.00f;
+        }
+    }
+    return gpa;
+}
+
+// 计算计算机类学科竞赛加分GPA
+float calculateCompetitionGPA(Competition *competition) {
+    // 根据获奖等级和竞赛级别计算加分GPA
+    float gpa = 0.00f;
+    if (competition == NULL) {
+        return gpa; // 如果传入的竞赛指针为空，则直接返回
+    }
+    //如果是国家级
+    if (strcmp(competition->competitionLevel, "国家级") == 0) {
+
+        if (competition->competitionType=='A' && competition->rank == 1) {
+            //A类一等奖
+            gpa = 0.40f;
+        }else if (competition->competitionType=='A' && competition->rank == 2) {
+            gpa = 0.20f;
+        }else if (competition->competitionType=='A' && competition->rank == 3) {
+            gpa = 0.10f;
+        }else if (competition->competitionType=='B' && competition->rank == 1) {
+            gpa = 0.20f;
+        }else if (competition->competitionType=='B' && competition->rank == 2) {
+            gpa = 0.10f;
+        }else if (competition->competitionType=='B' && competition->rank == 3) {
+            gpa = 0.05f;
+        }else if (competition->competitionType=='C' && competition->rank == 1) {
+            gpa = 0.10f;
+        }else if (competition->competitionType=='C' && competition->rank == 2) {
+            gpa = 0.05f;
+        }else if (competition->competitionType=='C' && competition->rank == 3) {
+            gpa = 0.02f;
+        }else{
+            gpa = 0.00f;
+        }
+    }
+    return gpa;
+}
+
+// 显示学生的全部大学生创新创业计划项目
+void displayInnovationProjects(StudentInfo *student) {
+    // 显示学生的大学生创新创业计划项目
+    if (student == NULL) {
+        printf("学生信息为空。\n");
+        return;
+    }
+    InnovationProject *current = student->innovationProjects;
+    if (current == NULL) {
+        printf("学生没有大学生创新创业计划项目。\n");
+        return;
+    }else{
+        printf("大学生创新创业计划项目：\n");
+        printf("项目名称: %s, 是否结题: %d, 项目级别: %s, 是否为项目负责人: %d, 加分: %.2f\n", current->projectName, current->isFinished, current->projectLevel, current->isLeaderOrSecondLeader, current->gpa);
+    }
+}
+
+// 显示学生的全部学术论文
+void displayAcademicPapers(StudentInfo *student) {
+    // 显示学生的学术论文
+    if (student == NULL) {
+        printf("学生信息为空。\n");
+        return;
+    }
+    AcademicPaper *current = student->academicPapers;
+    if (current == NULL) {
+        printf("学生没有学术论文。\n");
+        return;
+    }
+    printf("学术论文：\n");
+    while (current != NULL) {
+        printf("论文标题: %s, 期刊名称: %s, 是否第一作者: %d, 期刊级别: %d, 加分: %.2f\n", current->title, current->journalName, current->isFirstAuthor, current->journalLevel, current->gpa);
+        current = current->next;
+    }
+    printf("所有学术论文已全部显示完成。\n");
+}
+
+// 显示学生的全部计算机类学科竞赛
+void displayCompetitions(StudentInfo *student) {
+    // 显示学生的计算机类学科竞赛
+    if (student == NULL) {
+        printf("学生信息为空。\n");
+        return;
+    }
+    Competition *current = student->competitions;
+    if (current == NULL) {
+        printf("该学生没有计算机类学科竞赛。\n");
+        return;
+    }
+    printf("计算机类学科竞赛：\n");
+    while (current != NULL) {
+        printf("竞赛名称: %s, 参赛队伍人数: %d, 竞赛级别: %s, 获奖等级: %d, 竞赛类别: %s, 加分: %.2f\n", current->competitionName, current->teamSize, current->competitionLevel, current->rank, current->competitionType, current->gpa);
+        current = current->next;
+    }
+    printf("所有计算机类学科竞赛已全部显示完成。\n");
+}
+
+//修改大学生创新创业计划项目
+void modifyInnovationProject(StudentInfo *student) {
+    // 修改大学生创新创业计划项目
+    if (student == NULL) {
+        handleInputError("学生信息不能为空。\n");
+        return;
+    }
+    if (student->innovationProjects == NULL) {
+        printf("当前没有项目可以修改。\n");
+    }
+    int choice;
+    printf("请选择修改类型：\n");
+    printf("1. 修改项目名称\n");
+    printf("2. 修改项目级别\n");
+    printf("3. 修改是否结题\n");
+    printf("4. 修改是否为项目负责人\n");
+    printf("5. 返回上一级菜单\n");
+    scanf("%d", &choice);
+    // 根据用户选择执行相应操作
+    switch (choice) {
+        case 1: {
+            // 修改项目名称
+            InnovationProject *current = student->innovationProjects;
+            printf("请输入要修改的项目名称（输入q退出）：");
+            char projectName[MAX_NAME_LENGTH];
+            scanf("%s", projectName);
+            if (strcmp(projectName, "q") == 0) {
+                break;
+            }
+            strcpy(current->projectName, projectName);
+            printf("项目名称修改成功。\n");
+            break;
+        }
+        case 2: {
+            // 修改项目级别
+            InnovationProject *current = student->innovationProjects;
+            printf("请输入要修改的级别（输入q退出）：");
+            char projectLevel[MAX_NAME_LENGTH];
+            scanf("%s", projectLevel);
+            if (strcmp(projectLevel, "q") == 0) {
+                break;
+            }
+            strcpy(current->projectLevel, projectLevel);
+            printf("项目级别修改成功。\n");
+            break;
+        }
+        case 3: {
+            // 修改是否结题
+            InnovationProject *current = student->innovationProjects;
+            printf("请输入是否结题（1. 是 2. 否）：");
+            int isFinished;
+            scanf("%d", &isFinished);
+            current->isFinished = isFinished;
+            printf("是否结题修改成功。\n");
+            break;
+        }
+        case 4: {
+            // 修改是否为项目负责人
+            InnovationProject *current = student->innovationProjects;
+            printf("请输入是否为项目负责人（0.不是负责人 1. 第一负责人 2. 第二负责人）：");
+            int isLeaderOrSecondLeader;
+            scanf("%d", &isLeaderOrSecondLeader);
+            current->isLeaderOrSecondLeader = isLeaderOrSecondLeader;
+            printf("是否为项目负责人修改成功。\n");
+            break;
+        }
+    }
+}
+
+//修改学术论文
+void modifyAcademicPaper(StudentInfo *student) {
+    // 修改学术论文
+    if (student == NULL) {
+        handleInputError("学生信息不能为空。\n");
+        return;
+    }
+    if (student->academicPapers == NULL) {
+        printf("当前没有学术论文可以修改。\n");
+    }
+    int choice;
+    printf("请选择修改类型：\n");
+    printf("1. 修改论文标题\n");
+    printf("2. 修改期刊名称\n");
+    printf("3. 修改是否为第一作者\n");
+    printf("4. 修改期刊级别\n");
+    printf("5. 返回上一级菜单\n");
+    scanf("%d", &choice);
+    // 根据用户选择执行相应操作
+    switch (choice) {
+        case 1: {
+            // 修改论文标题
+            AcademicPaper *current = student->academicPapers;
+            printf("请输入要修改的论文标题（输入q退出）：");
+            char title[MAX_NAME_LENGTH];
+            scanf("%s", title);
+            if (strcmp(title, "q") == 0) {
+                break;
+            }
+            while (current != NULL) {
+                if (strcmp(current->title, title) == 0) {
+                    printf("找到论文: %s, 当前期刊名称: %s\n", current->title, current->journalName);
+                    printf("请输入新的论文标题: ");
+                    scanf("%s", current->title);
+                    printf("论文标题修改成功。\n");
+                    break;
+                }
+                current = current->next;
+            }
+            break;
+        }
+        case 2: {
+            // 修改期刊名称
+            AcademicPaper *current = student->academicPapers;
+            printf("请输入要修改的论文标题（输入q退出）：");
+            char title[MAX_NAME_LENGTH];
+            scanf("%s", title);
+            if (strcmp(title, "q") == 0) {
+                break;
+            }
+            while (current != NULL) {
+                if (strcmp(current->title, title) == 0) {
+                    printf("找到论文: %s, 当前期刊名称: %s\n", current->title, current->journalName);
+                    printf("请输入新的期刊名称: ");
+                    scanf("%s", current->journalName);
+                    printf("期刊名称修改成功。\n");
+                    break;
+                }
+                current = current->next;
+            }
+            break;
+        }
+        case 3: {
+            // 修改是否为第一作者
+            AcademicPaper *current = student->academicPapers;
+            printf("请输入要修改的论文标题（输入q退出）：");
+            char title[MAX_NAME_LENGTH];
+            scanf("%s", title);
+            if (strcmp(title, "q") == 0) {
+                break;
+            }
+            while (current != NULL) {
+                if (strcmp(current->title, title) == 0) {
+                    printf("找到论文: %s, 当前是否为第一作者: %d\n", current->title, current->isFirstAuthor);
+                    printf("请输入是否为第一作者（0. 否 1. 是）: ");
+                    int isFirstAuthor;
+                    scanf("%d", &isFirstAuthor);
+                    current->isFirstAuthor = isFirstAuthor;
+                    printf("是否为第一作者修改成功。\n");
+                    break;
+                }
+                current = current->next;
+            }
+            break;
+        }
+        case 4: {
+            // 修改期刊级别
+            AcademicPaper *current = student->academicPapers;
+            printf("请输入要修改的论文标题（输入q退出）：");
+            char title[MAX_NAME_LENGTH];
+            scanf("%s", title);
+            if (strcmp(title, "q") == 0) {
+                break;
+            }
+            while (current != NULL) {
+                if (strcmp(current->title, title) == 0) {
+                    printf("找到论文: %s, 当前期刊级别: %d\n", current->title, current->journalLevel);
+                    printf("请输入新的期刊级别: ");
+                    int journalLevel;
+                    scanf("%d", &journalLevel);
+                    current->journalLevel = journalLevel;
+                    printf("期刊级别修改成功。\n");
+                    break;
+                }
+                current = current->next;
+            }
+            break;
+        }
+    }
+}
+
+//修改计算机类学科竞赛
+void modifyCompetition(StudentInfo *student) {
+    // 修改计算机类学科竞赛
+    if (student == NULL) {
+        handleInputError("学生信息不能为空。\n");
+        return;
+    }
+    if (student->competitions == NULL) {
+        printf("当前没有竞赛可以修改。\n");
+    }
+    int choice;
+    printf("请选择修改类型：\n");
+    printf("1. 修改竞赛名称\n");
+    printf("2. 修改参赛队伍人数\n");
+    printf("3. 修改竞赛级别\n");
+    printf("4. 修改获奖等级\n");
+    printf("5. 修改竞赛类别\n");
+    printf("6. 返回上一级菜单\n");
+    scanf("%d", &choice);
+    // 根据用户选择执行相应操作
+    switch (choice) {
+        case 1: {
+            // 修改竞赛名称
+            Competition *current = student->competitions;
+            printf("请输入要修改的竞赛名称（输入q退出）：");
+            char competitionName[MAX_NAME_LENGTH];
+            scanf("%s", competitionName);
+            if (strcmp(competitionName, "q") == 0) {
+                break;
+            }
+            while (current != NULL) {
+                if (strcmp(current->competitionName, competitionName) == 0) {
+                    printf("找到竞赛: %s, 当前参赛队伍人数: %d\n", current->competitionName, current->teamSize);
+                    printf("请输入新的竞赛名称: ");
+                    scanf("%s", current->competitionName);
+                    printf("竞赛名称修改成功。\n");
+                    break;
+                }
+                current = current->next;
+            }
+            if (current == NULL) {
+                printf("未找到指定的竞赛。\n");
+            }
+            break;
+        }
+        case 2: {
+            // 修改参赛队伍人数
+            Competition *current = student->competitions;
+            printf("请输入要修改的竞赛名称（输入q退出）：");
+            char competitionName[MAX_NAME_LENGTH];
+            scanf("%s", competitionName);
+            if (strcmp(competitionName, "q") == 0) {
+                break;
+            }
+            while (current != NULL) {
+                if (strcmp(current->competitionName, competitionName) == 0) {
+                    printf("找到竞赛: %s, 当前参赛队伍人数: %d\n", current->competitionName, current->teamSize);
+                    printf("请输入新的参赛队伍人数: ");
+                    scanf("%d", &current->teamSize);
+                    printf("参赛队伍人数修改成功。\n");
+                    break;
+                }
+                current = current->next;
+            }
+            if (current == NULL) {
+                printf("未找到指定的竞赛。\n");
+            }
+            break;
+        }
+        case 3: {
+            // 修改竞赛级别
+            Competition *current = student->competitions;
+            printf("请输入要修改的竞赛名称（输入q退出）：");
+            char competitionName[MAX_NAME_LENGTH];
+            scanf("%s", competitionName);
+            if (strcmp(competitionName, "q") == 0) {
+                break;
+            }
+            while (current != NULL) {
+                if (strcmp(current->competitionName, competitionName) == 0) {
+                    printf("找到竞赛: %s, 当前竞赛级别: %s\n", current->competitionName, current->competitionLevel);
+                    printf("请输入新的竞赛级别: ");
+                    scanf("%s", current->competitionLevel);
+                    printf("竞赛级别修改成功。\n");
+                    break;
+                }
+                current = current->next;
+            }
+            if (current == NULL) {
+                printf("未找到指定的竞赛。\n");
+            }
+            break;
+        }
+        case 4: {
+            // 修改获奖等级
+            Competition *current = student->competitions;
+            printf("请输入要修改的竞赛名称（输入q退出）：");
+            char competitionName[MAX_NAME_LENGTH];
+            scanf("%s", competitionName);
+            if (strcmp(competitionName, "q") == 0) {
+                break;
+            }
+            while (current != NULL) {
+                if (strcmp(current->competitionName, competitionName) == 0) {
+                    printf("找到竞赛: %s, 当前获奖等级: %d\n", current->competitionName, current->rank);
+                    printf("请输入新的获奖等级: (1, 2, 3)");
+                    int rank;
+                    scanf("%d", &rank);
+                    current->rank = rank;
+                    printf("获奖等级修改成功。\n");
+                    break;
+                }
+                current = current->next;
+            }
+            if (current == NULL) {
+                printf("未找到指定的竞赛。\n");
+            }
+            break;
+        }
+        case 5: {
+            // 修改竞赛类别
+            Competition *current = student->competitions;
+            printf("请输入要修改的竞赛名称（输入q退出）：");
+            char competitionName[MAX_NAME_LENGTH];
+            scanf("%s", competitionName);
+            if (strcmp(competitionName, "q") == 0) {
+                break;
+            }
+            while (current != NULL) {
+                if (strcmp(current->competitionName, competitionName) == 0) {
+                    printf("找到竞赛: %s, 当前竞赛类别: %c\n", current->competitionName, current->competitionType);
+                    printf("请输入新的竞赛类别: (A, B, C)");
+                    char competitionType;
+                    scanf("%c", &competitionType);
+                    current->competitionType = competitionType;
+                    printf("竞赛类别修改成功。\n");
+                    break;
+                }
+                current = current->next;
+            }
+            if (current == NULL) {
+                printf("未找到指定的竞赛。\n");
+            }
+            break;
+        }
+    }
+}
+
+//删除大学生创新创业项目
+void deleteInnovationProject(StudentInfo *student) {
+    // 删除大学生创新创业计划项目
+    if (student == NULL) {
+        handleInputError("学生信息不能为空。\n");
+        return;
+    }
+    if (student->innovationProjects == NULL) {
+        printf("当前没有项目可以删除。\n");
+    }
+    InnovationProject *current = student->innovationProjects;
+    InnovationProject *prev = NULL;
+    printf("请输入要删除的项目名称（输入q退出）：");
+    char projectName[MAX_NAME_LENGTH];
+    scanf("%s", projectName);
+    if (strcmp(projectName, "q") == 0) {
+        return;
+    }
+    if (current != NULL && strcmp(current->projectName, projectName) == 0) {
+        // 要删除的是头节点
+        student->innovationProjects = NULL;
+        free(current); // 释放被删除节点的内存
+        calculateQualityGPA(student);  //重新计算素质加分GPA
+        calculateGPA(student);  //重新计算GPA
+        printf("项目删除成功。\n");
+        return;
+    }
+    if (current == NULL) {
+        printf("未找到指定的项目。\n");
+    }
+}
+
+//删除学术论文
+void deleteAcademicPaper(StudentInfo *student) {
+    // 删除学术论文
+    if (student == NULL) {
+        handleInputError("学生信息不能为空。\n");
+        return;
+    }
+    if (student->academicPapers == NULL) {
+        printf("当前没有论文可以删除。\n");
+    }
+    AcademicPaper *current = student->academicPapers;
+    AcademicPaper *prev = NULL;
+    printf("请输入要删除的论文标题（输入q退出）：");
+    char title[MAX_NAME_LENGTH];
+    scanf("%s", title);
+    if (strcmp(title, "q") == 0) {
+        return;
+    }
+    while (current != NULL) {
+        if (strcmp(current->title, title) == 0) {
+            if (prev == NULL) {
+                // 要删除的是头节点
+                student->academicPapers = current->next;
+            } else {
+                // 要删除的是中间或尾节点
+                prev->next = current->next;
+            }
+            AcademicPaper *temp = current;
+            current = current->next;
+            free(temp); // 释放被删除节点的内存
+            calculateQualityGPA(student);  //重新计算素质加分GPA
+            calculateGPA(student);  //重新计算GPA
+            printf("论文删除成功。\n");
+            break;
+        }
+        prev = current;
+        current = current->next;
+    }
+    if (current == NULL) {
+        printf("未找到指定的论文。\n");
+    }
+}
+
+//删除计算机类学科竞赛
+void deleteCompetition(StudentInfo *student) {
+    // 删除计算机类学科竞赛
+    if (student == NULL) {
+        handleInputError("学生信息不能为空。\n");
+        return;
+    }
+    if (student->competitions == NULL) {
+        printf("当前没有竞赛可以删除。\n");
+    }
+    Competition *current = student->competitions;
+    Competition *prev = NULL;
+    printf("请输入要删除的竞赛名称（输入q退出）：");
+    char competitionName[MAX_NAME_LENGTH];
+    scanf("%s", competitionName);
+    if (strcmp(competitionName, "q") == 0) {
+        return;
+    }
+    while (current != NULL) {
+        if (strcmp(current->competitionName, competitionName) == 0) {
+            if (prev == NULL) {
+                // 要删除的是头节点
+                student->competitions = current->next;
+            } else {
+                // 要删除的是中间或尾节点
+                prev->next = current->next;
+            }
+            Competition *temp = current;
+            current = current->next;
+            free(temp); // 释放被删除节点的内存
+            calculateQualityGPA(student);  //重新计算素质加分GPA
+            calculateGPA(student);  //重新计算GPA
+            printf("竞赛删除成功。\n");
+            break;
+        }
+        prev = current;
+        current = current->next;
+    }
+    if (current == NULL) {
+        printf("未找到指定的竞赛。\n");
+    }
 }
