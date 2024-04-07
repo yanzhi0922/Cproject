@@ -67,7 +67,7 @@ typedef struct Competition {
 typedef struct StudentInfo {
     char studentID[STUDENT_ID_LENGTH+1];// 学号
     char name[MAX_NAME_LENGTH];// 姓名
-    char password[MAX_PASSWORD_LENGTH+1];// 密码
+    char password[MAX_PASSWORD_LENGTH+2];// 密码
     int classNumber;// 班级
     int grade;      //年级（大一、大二、大三、大四）
     float gpa;  // 学业GPA
