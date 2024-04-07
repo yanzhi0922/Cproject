@@ -1,0 +1,12 @@
+##StudentStart##
+StudentID: 12345678
+Name: уехЩ
+Password: 123456
+Grade: 1
+ClassNumber: 1
+GPA: 0.000000
+TotalCredit: 0.00
+QualityGPA: 0.00
+AverageScore: nan
+TotalGPA: 0.000000
+##StudentEnd##

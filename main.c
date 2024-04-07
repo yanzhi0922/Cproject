@@ -42,7 +42,7 @@ typedef struct InnovationProject {
 // 学术论文结构体
 typedef struct AcademicPaper {
     char title[MAX_NAME_LENGTH]; // 论文标题
-    char journalName[MAX_NAME_LENGTH]; // 期刊名称
+    char journalName[MAX_NAME_LENGTH]; // 期刊类名
     int isFirstAuthor; // 是否为第一作者
 
     //期刊级别，顶级加0.4，一级期刊加0.2 GPA，二级期刊加0.1 GPA，三级期刊加0.05 GPA，四级期刊加0.02 GPA，五级期刊加0.01 GPA
@@ -65,9 +65,9 @@ typedef struct Competition {
 
 // 学生信息结构体
 typedef struct StudentInfo {
-    char studentID[STUDENT_ID_LENGTH];// 学号
+    char studentID[STUDENT_ID_LENGTH+1];// 学号
     char name[MAX_NAME_LENGTH];// 姓名
-    char password[MAX_PASSWORD_LENGTH];// 密码
+    char password[MAX_PASSWORD_LENGTH+1];// 密码
     int classNumber;// 班级
     int grade;      //年级（大一、大二、大三、大四）
     float gpa;  // 学业GPA
@@ -93,6 +93,7 @@ typedef struct AdminInfo {
 StudentInfo *studentsList = NULL;
 AdminInfo *adminsList=NULL;
 int count = 0;//记录密码错误次数
+int isSaved = 0;//记录是否保存到文件
 
 // 函数声明
 void loginSystem();//登录系统
@@ -126,7 +127,7 @@ void insertInnovationProject(StudentInfo *student, InnovationProject *project);/
 void insertAcademicPaper(StudentInfo *student, AcademicPaper *paper);//插入学术论文链表尾
 void insertCompetition(StudentInfo *student, Competition *competition);//插入计算机类学科竞赛链表尾
 void insertStudent(StudentInfo **head, StudentInfo *newStudent);//插入学生链表头
-void calculateGPA(StudentInfo *student);//计算GPA、总学分、加权平均分、总绩点
+void calculateAcademics(StudentInfo *student);//计算GPA、总学分、加权平均分、总绩点
 float calculateSingleGPA(const float *score);//计算单门课程绩点
 void deleteStudentRecord(StudentInfo **head, char *studentID);//删除学生记录
 void handleInputError(const char *message);//处理输入错误
@@ -162,30 +163,36 @@ int isScoreValid(float score);//判断分数是否合法
 int isPasswordValid(const char *password);//判断密码是否合法
 int isDigit(char c);//判断是否为数字
 int isCreditValid(float credit);//判断学分是否合法
-int isJournalLevelValid(int journalLevel);//判断期刊级别是否合法
 int isCompetitionLevelValid(const char *competitionLevel);//判断竞赛级别是否合法
 int isCompetitionTypeValid(char competitionType);//判断竞赛类别是否合法
 int isProjectLevelValid(const char *projectLevel);//判断项目级别是否合法
 int isRankValid(int rank);//判断获奖等级是否合法
 int isLeaderOrSecondLeaderValid(int isLeaderOrSecondLeader);//判断是否为负责人是否合法
+void calculateJournalLevel(AcademicPaper *paper);//计算学术论文期刊级别
 
 // 主函数
 int main() {
-    // 初始化管理员信息,用户名和密码均为admin
-    AdminInfo *admin = (AdminInfo *)malloc(sizeof(AdminInfo));
-    if (admin == NULL) {
-        // 如果内存分配失败，打印错误信息并退出程序
-        fprintf(stderr, "内存分配失败\n");
-        exit(EXIT_FAILURE);
+    loadFromFile();//从文件加载
+
+    if(adminsList==NULL){
+        AdminInfo *admin = (AdminInfo *)malloc(sizeof(AdminInfo));
+        if (admin == NULL) {
+            // 如果内存分配失败，打印错误信息并退出程序
+            fprintf(stderr, "内存分配失败\n");
+            exit(EXIT_FAILURE);
+        }
+        strcpy(admin->username, "admin");
+        strcpy(admin->password, "admin");
+        admin->next = NULL;
+        adminsList = admin;
     }
-    strcpy(admin->username, "admin");
-    strcpy(admin->password, "admin");
-    admin->next = NULL;
-    adminsList = admin;
-    loadFromFile();
-    // 进入系统
-    loginSystem();
-    saveToFile();
+    // 初始化管理员信息,用户名和密码均为admin
+
+
+    loginSystem();// 进入系统
+    if(!isSaved)saveToFile();//保存到文件
+    freeMemory(&studentsList);//释放内存
+    freeAdminMemory(&adminsList);//释放内存
     return 0;
 }
 
@@ -292,7 +299,7 @@ void adminLogin() {
 void addStudentAccount() {
     StudentInfo *newStudent = createStudent();
     // 计算GPA
-    calculateGPA(newStudent);
+    calculateAcademics(newStudent);
     // 插入学生列表
     insertStudent(&studentsList, newStudent);
     printf("学生账号创建成功。\n");
@@ -301,26 +308,9 @@ void addStudentAccount() {
 // 添加课程
 void addCourse(StudentInfo *student) {
     AcademicScoreNode *newCourse = createAcademicScore();
-    printf("请输入课程信息：\n");
-    printf("课程名称: ");
-    scanf("%s", newCourse->courseName);
-    printf("分数: ");
-    scanf("%f", &newCourse->score);
-    //判断分数是否合法
-    while (!isScoreValid(newCourse->score)) {
-        handleInputError("分数应为0-100之间的数，请重新输入。\n");
-        scanf("%f", &newCourse->score);
-    }
-    printf("学分: ");
-    scanf("%f", &newCourse->credit);
-    //判断学分是否合法
-    while (isCreditValid(newCourse->credit)){
-        printf("学分不会超过8，请重新输入。\n");
-        scanf("%f", &newCourse->credit);
-    }
-    newCourse->gpa = calculateSingleGPA(&newCourse->score);
-    // 将新课程添加到指定学生的课程链表
-    insertAcademicScore(findStudentByID(student->studentID), newCourse);
+    insertAcademicScore(student, newCourse);
+    // 更新GPA、总学分、加权平均分、总绩点
+    calculateAcademics(student);
     printf("课程添加成功。\n");
 }
 
@@ -342,24 +332,21 @@ void addQualityProject(StudentInfo *student) {
         case 1:{
             InnovationProject *newProject = createInnovationProject();
             insertInnovationProject(student, newProject);
-            addQualityProject(student);
             break;
         }
         case 2:{
             AcademicPaper *newPaper = createAcademicPaper();
             insertAcademicPaper(student, newPaper);
-            addQualityProject(student);
             break;
         }
         case 3:{
             Competition *newCompetition = createCompetition();
             insertCompetition(student, newCompetition);
-            addQualityProject(student);
             break;
         }
         case 4:{
             printf("返回。\n");
-            break;
+            return; // 返回上一级菜单
         }
         default: {
             printf("无效的选项。\n");
@@ -453,7 +440,7 @@ void modifyScoreMenu() {
             }
         }
         // 更新GPA、总学分、加权平均分、总绩点
-        calculateGPA(student);
+        calculateAcademics(student);
         printf("成绩修改成功。\n");
     } else {
         printf("未找到学生信息。\n");
@@ -632,8 +619,8 @@ void displayAdminMenu(AdminInfo *admin) {
             }
             case 10:{
                 printf("管理员退出登录。\n");
-                freeMemory(&studentsList);//释放内存
-                freeAdminMemory(&adminsList);//释放内存
+                //freeMemory(&studentsList);//释放内存
+                //freeAdminMemory(&adminsList);//释放内存
                 break;
             }
             default: {
@@ -686,8 +673,8 @@ void displaySelfMenu(StudentInfo *student) {
             }
             case 4:{
                 printf("学生退出登录。\n");
-                freeMemory(&studentsList);//释放内存
-                freeAdminMemory(&adminsList);//释放内存
+                //freeMemory(&studentsList);//释放内存
+                //freeAdminMemory(&adminsList);//释放内存
                 break;
             }
             default: {
@@ -844,7 +831,7 @@ void insertCompetition(StudentInfo *student, Competition *competition) {
 }
 
 // 计算GPA、总学分、加权平均分、总绩点
-void calculateGPA(StudentInfo *student) {
+void calculateAcademics(StudentInfo *student) {
     // 计算并更新学生的GPA
     if (student == NULL) {
         return; // 如果传入的学生指针为空，则直接返回
@@ -879,7 +866,11 @@ void calculateGPA(StudentInfo *student) {
     student->totalGPA = student->gpa + student->qualityGpa;
 
     // 计算加权平均分
-    student->averageScore = totalScore / totalCredit;
+    if(totalCredit>0){
+        student->averageScore = totalScore / totalCredit;
+    }else {
+        student->averageScore = 0.00f;
+    }
 }
 
 // 计算单门课程绩点
@@ -964,9 +955,8 @@ StudentInfo *createStudent() {
     strcpy(newStudent->name, "New Student");
     strcpy(newStudent->studentID, "00000000");
     newStudent->classNumber = 1; // 假设学生班级为1
-    newStudent->grade = 1; // 假设学生年级为1
+    newStudent->grade = 1; // 缺省值学生年级为1
     strcpy(newStudent->password, "123456"); // 默认密码为123456
-
     // 输入学生信息
     printf("请输入学生信息：\n");
     printf("学号: ");
@@ -986,7 +976,7 @@ StudentInfo *createStudent() {
     printf("姓名: ");
     scanf("%s", newStudent->name);
     printf("班级: ");
-    scanf("%d", &newStudent->classNumber);
+    scanf("%d", &(newStudent->classNumber));
     //判断班级是否合法
     while (!isClassValid(newStudent->classNumber)) {
         handleInputError("班级应为大于0的数，请重新输入。\n");
@@ -1018,7 +1008,7 @@ StudentInfo *createStudent() {
             printf("请输入第%d门课程信息：\n", i + 1);
             addCourse(newStudent);
         }
-        calculateGPA(newStudent);
+        calculateAcademics(newStudent);
     }
 
     int choice2;
@@ -1033,7 +1023,7 @@ StudentInfo *createStudent() {
         //录入素质加分项目
         addQualityProject(newStudent);
         calculateQualityGPA(newStudent);
-        calculateGPA(newStudent);
+        calculateAcademics(newStudent);
     }
     // 返回新创建的StudentInfo指针
     return newStudent;
@@ -1053,7 +1043,7 @@ AcademicScoreNode *createAcademicScore() {
         strcpy(newCourse->courseName, "Unknown Course"); // 初始化课程名称
         newCourse->score = 0.00f; // 初始化课程分数
         newCourse->credit = 0.0f; // 初始化课程学分
-        newCourse->gpa = 0.0f; // 初始化课程绩点
+        newCourse->gpa = calculateSingleGPA(&newCourse->score); // 初始化课程绩点
         printf("请输入课程信息：\n");
         printf("课程名称: ");
         scanf("%s", newCourse->courseName);
@@ -1126,7 +1116,7 @@ AcademicPaper *createAcademicPaper() {
     printf("请输入学术论文信息：\n");
     printf("论文标题: ");
     scanf("%s", newPaper->title);
-    printf("期刊名称: ");
+    printf("期刊类名: ");
     scanf("%s", newPaper->journalName);
     printf("是否为第一作者(1. 是 2. 否): ");
     scanf("%d", &newPaper->isFirstAuthor);
@@ -1135,13 +1125,8 @@ AcademicPaper *createAcademicPaper() {
         handleInputError("是否为第一作者应为1或2，请重新输入。\n");
         scanf("%d", &newPaper->isFirstAuthor);
     }
-    printf("期刊级别(1. 顶级 2. 一级 3. 二级 4. 三级 5. 四级 6. 五级): ");
-    scanf("%d", &newPaper->journalLevel);
-    // 判断期刊级别是否合法
-    while (!isJournalLevelValid(newPaper->journalLevel)) {
-        handleInputError("期刊级别应为1-6之间的数，请重新输入。\n");
-        scanf("%d", &newPaper->journalLevel);
-    }
+    newPaper->journalLevel = 0; // 默认期刊级别初始化为0
+    calculateJournalLevel(newPaper); // 计算期刊级别
     newPaper->gpa = calculatePaperGPA(newPaper);
     // 返回新创建的AcademicPaper指针
     return newPaper;
@@ -1176,11 +1161,11 @@ Competition *createCompetition() {
         scanf("%d", &newCompetition->rank);
     }
     printf("竞赛类别(A类，B类，C类): ");
-    scanf("%s", newCompetition->competitionType);
+    scanf("%c", &newCompetition->competitionType);
     // 判断竞赛类别是否合法
     while (!isCompetitionTypeValid(newCompetition->competitionType)) {
         handleInputError("竞赛类别应为A类，B类，C类，请重新输入。\n");
-        scanf("%c", newCompetition->competitionType);
+        scanf("%c", &newCompetition->competitionType);
     }
     newCompetition->gpa = calculateCompetitionGPA(newCompetition);
     // 返回新创建的Competition指针
@@ -1210,9 +1195,13 @@ StudentInfo *findStudentByID(const char *studentID) {
 // 查找管理员
 AdminInfo *findAdminByUsername(const char *username) {
     // 比较给定的用户名和管理员的用户名
-    if (strcmp(adminsList->username, username) == 0) {
-        // 如果找到匹配的用户名，返回管理员信息
-        return adminsList;
+    AdminInfo *currentAdmin = adminsList;
+    while (currentAdmin != NULL) {
+        if (strcmp(currentAdmin->username, username) == 0) {
+            // 如果找到匹配的用户名，返回当前管理员的信息
+            return currentAdmin;
+        }
+        currentAdmin = currentAdmin->next;
     }
     // 如果没有找到匹配的用户名，返回NULL
     return NULL;
@@ -1287,7 +1276,7 @@ void modifyAcademicScore(StudentInfo *student) {
                         scanf("%f", &currentScore->score);
                     }
                     currentScore->gpa = calculateSingleGPA(&currentScore->score);//重新计算当前课程绩点
-                    calculateGPA(student);//重新计算GPA\总学分\加权平均分\总绩点
+                    calculateAcademics(student);//重新计算GPA\总学分\加权平均分\总绩点
                     printf("分数修改成功。\n");
                     break;
                 }
@@ -1321,7 +1310,7 @@ void modifyAcademicScore(StudentInfo *student) {
                         handleInputError("学分应为小于8数，请重新输入。\n");
                         scanf("%2f", &currentCredit->credit);
                     }
-                    calculateGPA(student);  //重新计算GPA\总学分\加权平均分\总绩点
+                    calculateAcademics(student);  //重新计算GPA\总学分\加权平均分\总绩点
                     printf("学分修改成功。\n");
                     break;
                 }
@@ -1358,7 +1347,7 @@ void modifyAcademicScore(StudentInfo *student) {
                     AcademicScoreNode *temp = currentDelete;
                     currentDelete = currentDelete->next;
                     free(temp); // 释放被删除节点的内存
-                    calculateGPA(student);  //重新计算GPA\总学分\加权平均分\总绩点
+                    calculateAcademics(student);  //重新计算GPA\总学分\加权平均分\总绩点
                     printf("课程删除成功。\n");
                     break;
                 }
@@ -1519,8 +1508,7 @@ void displayAllStudents(StudentInfo *head) {
 //排序学生链表
 void sortList(StudentInfo **head, int (*compare)(const StudentInfo *, const StudentInfo *)) {
     int swapped;
-    StudentInfo *current;
-    StudentInfo *prev = NULL;
+    StudentInfo *current=NULL;
     do {
         swapped = 0;
         current = *head;
@@ -1733,6 +1721,8 @@ void saveToFile() {
         currentAdmin = currentAdmin->next;
     }
     fclose(adminFile);//关闭文件
+    isSaved = 1;//设置保存标志
+    printf("保存成功。\n");
 }
 
 // 从文件加载
@@ -1743,7 +1733,7 @@ void loadFromFile() {
         return;
     }
 
-    freeMemory(&studentsList); // 清空学生链表
+    //freeMemory(&studentsList); // 清空学生链表
 
     char buffer[1024];// 用于存储读取的每行数据
     while (fgets(buffer, sizeof(buffer), file)) {
@@ -1880,7 +1870,7 @@ void loadFromFile() {
         handleInputError("打开文件失败");
         return;
     }
-    freeAdminMemory(&adminsList); // 清空管理员链表
+    //freeAdminMemory(&adminsList); // 清空管理员链表
 
     while (fgets(buffer, sizeof(buffer), adminFile)) {
         if (strncmp(buffer, ADMIN_START, strlen(ADMIN_START)) == 0) {
@@ -2063,7 +2053,7 @@ void displayAcademicPapers(StudentInfo *student) {
     }
     printf("学术论文：\n");
     while (current != NULL) {
-        printf("论文标题: %s, 期刊名称: %s, 是否第一作者: %d, 期刊级别: %d, 加分: %.2f\n", current->title, current->journalName, current->isFirstAuthor, current->journalLevel, current->gpa);
+        printf("论文标题: %s, 期刊类名: %s, 是否第一作者: %d, 期刊级别: %d, 加分: %.2f\n", current->title, current->journalName, current->isFirstAuthor, current->journalLevel, current->gpa);
         current = current->next;
     }
     printf("所有学术论文已全部显示完成。\n");
@@ -2110,6 +2100,7 @@ void modifyInnovationProject(StudentInfo *student) {
     // 判断用户选择是否合法
     while (choice < 1 || choice > 5) {
         handleInputError("选项应在1-5之间，请重新输入：");
+        scanf("%d", &choice);
         return;
     }
     switch (choice) {
@@ -2190,7 +2181,7 @@ void modifyAcademicPaper(StudentInfo *student) {
     int choice;
     printf("请选择修改类型：\n");
     printf("1. 修改论文标题\n");
-    printf("2. 修改期刊名称\n");
+    printf("2. 修改期刊类名\n");
     printf("3. 修改是否为第一作者\n");
     printf("4. 修改期刊级别\n");
     printf("5. 返回上一级菜单\n");
@@ -2198,6 +2189,7 @@ void modifyAcademicPaper(StudentInfo *student) {
     // 判断用户选择是否合法
     while (choice < 1 || choice > 5) {
         handleInputError("选项应在1-5之间，请重新输入：");
+        scanf("%d", &choice);
         return;
     }
     switch (choice) {
@@ -2283,15 +2275,8 @@ void modifyAcademicPaper(StudentInfo *student) {
             while (current != NULL) {
                 if (strcmp(current->title, title) == 0) {
                     printf("找到论文: %s, 当前期刊级别: %d\n", current->title, current->journalLevel);
-                    printf("请输入新的期刊级别: ");
-                    int journalLevel;
-                    scanf("%d", &journalLevel);
-                    //判断输入是否合法
-                    while(isJournalLevelValid(journalLevel)){
-                        handleInputError("级别应为1-6，请重新输入：");
-                        scanf("%d", &journalLevel);
-                    }
-                    current->journalLevel = journalLevel;
+                    current->journalLevel = 0;
+                    calculateJournalLevel(current);
                     printf("期刊级别修改成功。\n");
                     break;
                 }
@@ -2480,7 +2465,6 @@ void deleteInnovationProject(StudentInfo *student) {
         printf("当前没有项目可以删除。\n");
     }
     InnovationProject *current = student->innovationProjects;
-    InnovationProject *prev = NULL;
     printf("请输入要删除的项目名称（输入q退出）：");
     char projectName[MAX_NAME_LENGTH];
     scanf("%s", projectName);
@@ -2492,7 +2476,7 @@ void deleteInnovationProject(StudentInfo *student) {
         student->innovationProjects = NULL;
         free(current); // 释放被删除节点的内存
         calculateQualityGPA(student);  //重新计算素质加分GPA
-        calculateGPA(student);  //重新计算GPA
+        calculateAcademics(student);  //重新计算GPA
         printf("项目删除成功。\n");
         return;
     }
@@ -2532,7 +2516,7 @@ void deleteAcademicPaper(StudentInfo *student) {
             current = current->next;
             free(temp); // 释放被删除节点的内存
             calculateQualityGPA(student);  //重新计算素质加分GPA
-            calculateGPA(student);  //重新计算GPA
+            calculateAcademics(student);  //重新计算GPA
             printf("论文删除成功。\n");
             break;
         }
@@ -2575,7 +2559,7 @@ void deleteCompetition(StudentInfo *student) {
             current = current->next;
             free(temp); // 释放被删除节点的内存
             calculateQualityGPA(student);  //重新计算素质加分GPA
-            calculateGPA(student);  //重新计算GPA
+            calculateAcademics(student);  //重新计算GPA
             printf("竞赛删除成功。\n");
             break;
         }
@@ -2838,13 +2822,18 @@ int isGradeValid(int grade) {
 
 //判断班级是否合法
 int isClassValid(int classNumber) {
-    // 判断班级是否合法
-    return classNumber > 0;
+    if(classNumber <= 0) {
+        return 0;
+    }
+    return 1;
 }
 
 // 判断分数是否合法
 int isScoreValid(float score) {
-    return score >= 0 && score <= 100;
+    if (score < 0 || score > 100) {
+        return 0;
+    }
+    return 1;
 }
 
 // 判断学分是否合法
@@ -2859,7 +2848,11 @@ int isCreditValid(float credit) {
         return 0; // 不合法，学分超过最大值
     }
     // 检查学分是否为0.5的整数倍
-    if (credit != (int)(credit / 0.5) * 0.5) {
+    unsigned long int tmp;
+    tmp = credit * 10;
+    if (!(tmp % 5) && ((credit * 10 - tmp) < 0.000001)) {
+        return 1; // 合法，学分为0.5的整数倍
+    }else{
         return 0; // 不合法，学分不是0.5的整数倍
     }
     // 如果所有条件都满足，则学分合法
@@ -2877,47 +2870,71 @@ int isPasswordValid(const char *password) {
 //判断大创项目级别是否合法
 int isProjectLevelValid(const char *projectLevel){
     if(strcmp(projectLevel, "国家级") != 0 && strcmp(projectLevel, "省级") != 0 && strcmp(projectLevel, "校级") != 0){
-        return 1;
+        return 0;
     }
-    return 0;
-}
-
-//判断期刊级别是否合法
-int isJournalLevelValid(int journalLevel){
-    if(journalLevel < 1 || journalLevel > 6){
-        return 1;
-    }
-    return 0;
+    return 1;
 }
 
 //判断竞赛级别是否合法
 int isCompetitionLevelValid(const char *competitionLevel){
     if(strcmp(competitionLevel, "国家级") != 0 && strcmp(competitionLevel, "省级") != 0 && strcmp(competitionLevel, "校级") != 0){
-        return 1;
+        return 0;
     }
-    return 0;
+    return 1;
 }
 
 //判断竞赛类别是否合法
 int isCompetitionTypeValid(char competitionType){
     if(competitionType != 'A' && competitionType != 'B' && competitionType != 'C'){
-        return 1;
+        return 0;
     }
-    return 0;
+    return 1;
 }
 
 //判断获奖等级是否合法
 int isRankValid(int rank){
     if(rank != 1 && rank != 2 && rank != 3){
-        return 1;
+        return 0;
     }
-    return 0;
+    return 1;
 }
 
 //判断是否为负责人是否合法
 int isLeaderOrSecondLeaderValid(int isLeaderOrSecondLeader){
     if(isLeaderOrSecondLeader != 0 && isLeaderOrSecondLeader != 1 && isLeaderOrSecondLeader != 2){
-        return 1;
+        return 0;
     }
-    return 0;
+    return 1;
+}
+
+//计算论文级别
+void calculateJournalLevel(AcademicPaper *academicPaper){
+    // 计算论文级别
+    if(strcmp(academicPaper->journalName, "业界公认学科综合顶级期刊") == 0){
+        academicPaper->journalLevel = 1;
+    }else if(strcmp(academicPaper->journalName, "CCF-A期刊") == 0
+             || strcmp(academicPaper->journalName, "CCF-A会议长文") == 0
+             || strcmp(academicPaper->journalName, "CCF-B会议的最佳论文/最佳学生论文") == 0){
+        academicPaper->journalLevel = 2;
+    } else if(strcmp(academicPaper->journalName, "CCF-B期刊") == 0
+              || strcmp(academicPaper->journalName, "中科院期刊分区一区论文") == 0
+              || strcmp(academicPaper->journalName, "CCF-C会议的最佳论文/最佳学生论文") == 0){
+        academicPaper->journalLevel = 3;
+    } else if(strcmp(academicPaper->journalName, "CCF-C期刊论文") == 0
+              || strcmp(academicPaper->journalName, "CCF-B会议长文") == 0
+              || strcmp(academicPaper->journalName, "中科院期刊分区二区论文") == 0
+              || strcmp(academicPaper->journalName, "计算机学报、软件学报发表的学术论文") == 0){
+        academicPaper->journalLevel = 4;
+    } else if(strcmp(academicPaper->journalName, "影响因子非0的SCI检索期刊论文") == 0
+              || strcmp(academicPaper->journalName, "CCF-C会议长文") == 0
+              || strcmp(academicPaper->journalName, "信息科学") == 0
+              || strcmp(academicPaper->journalName, "计算机研究与发展") == 0
+              || strcmp(academicPaper->journalName, "电子学报中文版") == 0
+              || strcmp(academicPaper->journalName, "自动化学报发表的学术论文") == 0){
+        academicPaper->journalLevel = 5;
+    } else if(strcmp(academicPaper->journalName, "EI检索期刊") == 0){
+        academicPaper->journalLevel = 6;
+    }else{
+        academicPaper->journalLevel = 0;
+    }
 }

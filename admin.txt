@@ -1,0 +1,4 @@
+##AdminStart##
+Username: admin
+Password: admin
+##AdminEnd##
