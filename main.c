@@ -1129,6 +1129,7 @@ AcademicPaper *createAcademicPaper() {
     newPaper->journalLevel = 0; // 默认期刊级别初始化为0
     calculateJournalLevel(newPaper); // 计算期刊级别
     newPaper->gpa = calculatePaperGPA(newPaper);
+    newPaper->next = NULL; //后继指针初始化为NULL
     // 返回新创建的AcademicPaper指针
     return newPaper;
 }
@@ -1169,6 +1170,7 @@ Competition *createCompetition() {
         scanf("%c", &newCompetition->competitionType);
     }
     newCompetition->gpa = calculateCompetitionGPA(newCompetition);
+    newCompetition->next = NULL; //后继指针初始化为NULL
     // 返回新创建的Competition指针
     return newCompetition;
 }
@@ -1700,7 +1702,7 @@ void saveToFile() {
             fprintf(file, "%s\n", COMPETITION_END);
         }
 
-        // 学生记录结束
+        // 当前学生记录结束
         fprintf(file, "%s\n", STUDENT_END);
 
         currentStudent = currentStudent->next;
@@ -1791,6 +1793,7 @@ void loadFromFile() {
                 newScore->next = newStudent->academicScores;
                 newStudent->academicScores = newScore;
             }
+
 
             // 读取大学生创新创业计划项目链表
             if (fgets(buffer, sizeof(buffer), file) && strncmp(buffer, PROJECT_START, strlen(PROJECT_START)) == 0) {
@@ -2826,7 +2829,7 @@ int isGradeValid(int grade) {
 
 //判断班级是否合法
 int isClassValid(int classNumber) {
-    if(classNumber <= 0||!isDigit(classNumber)){
+    if(classNumber <= 0){
         return 0;
     }
     return 1;

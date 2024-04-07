@@ -1,0 +1,40 @@
+##StudentStart##
+StudentID: 12345678
+Name: 张三
+Password: 123456
+Grade: 2
+ClassNumber: 1
+GPA: 4.000000
+TotalCredit: 3.50
+QualityGPA: 0.10
+AverageScore: 98.699997
+TotalGPA: 4.100000
+##ScoreStart##
+CourseName: 微积分A1
+Score: 98.699997
+Credit: 3.50
+GPA: 4.00
+##ScoreEnd##
+##ProjectStart##
+ProjectName: 深度强化学习
+GPA: 0.10
+LeaderOrSecondLeader: 1
+ProjectLevel: 国家级
+IsFinished: 1
+##ProjectEnd##
+##PaperStart##
+Title: 无人机
+JournalName: CCF-A期刊
+IsFirstAuthor: 1
+JournalLevel: 2
+GPA: 0.20
+##PaperEnd##
+##CompetitionStart##
+CompetitionName: 蓝桥杯
+TeamSize: 1
+CompetitionLevel: 省级
+Rank: 1
+CompetitionType: A
+GPA: 0.00
+##CompetitionEnd##
+##StudentEnd##
