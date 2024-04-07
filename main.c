@@ -333,16 +333,19 @@ void addQualityProject(StudentInfo *student) {
         case 1:{
             InnovationProject *newProject = createInnovationProject();
             insertInnovationProject(student, newProject);
+            printf("大学生创新创业计划项目添加成功。\n");
             break;
         }
         case 2:{
             AcademicPaper *newPaper = createAcademicPaper();
             insertAcademicPaper(student, newPaper);
+            printf("学术论文添加成功。\n");
             break;
         }
         case 3:{
             Competition *newCompetition = createCompetition();
             insertCompetition(student, newCompetition);
+            printf("计算机类学科竞赛添加成功。\n");
             break;
         }
         case 4:{
