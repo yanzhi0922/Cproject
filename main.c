@@ -191,6 +191,7 @@ int main() {
 
     loginSystem();// 进入系统
     if(!isSaved)saveToFile();//保存到文件
+
     freeMemory(&studentsList);//释放内存
     freeAdminMemory(&adminsList);//释放内存
     return 0;
@@ -609,7 +610,7 @@ void displayAdminMenu(AdminInfo *admin) {
                 printf("请输入新密码：（不超过15位）");
                 scanf("%s", newPassword);
                 //判断密码长度是否合法
-                while (isPasswordValid(newPassword)) {
+                while (!isPasswordValid(newPassword)) {
                     handleInputError("密码长度应为1-15位，请重新输入。\n");
                     scanf("%s", newPassword);
                 }
@@ -663,7 +664,7 @@ void displaySelfMenu(StudentInfo *student) {
                 printf("请输入新密码：");
                 scanf("%s", newPassword);
                 //判断密码长度是否合法
-                while (isPasswordValid(newPassword)) {
+                while (!isPasswordValid(newPassword)) {
                     handleInputError("密码长度应为1-15位，请重新输入。\n");
                     scanf("%s", newPassword);
                 }
@@ -2127,7 +2128,7 @@ void modifyInnovationProject(StudentInfo *student) {
                 break;
             }
             //判断输入是否合法
-            while(isProjectLevelValid(projectLevel)){
+            while(!isProjectLevelValid(projectLevel)){
                 handleInputError("级别应为国家级，省级，校级，请重新输入：");
                 scanf("%s", projectLevel);
             }
@@ -2375,7 +2376,7 @@ void modifyCompetition(StudentInfo *student) {
                     printf("请输入新的竞赛级别: ");
                     scanf("%s", current->competitionLevel);
                     //判断输入是否合法
-                    while(isCompetitionLevelValid(current->competitionLevel)){
+                    while(!isCompetitionLevelValid(current->competitionLevel)){
                         handleInputError("级别应为国家级，省级，校级，请重新输入：");
                         scanf("%s", current->competitionLevel);
                     }
@@ -2405,7 +2406,7 @@ void modifyCompetition(StudentInfo *student) {
                     int rank;
                     scanf("%d", &rank);
                     //判断输入是否合法
-                    while(isRankValid(rank)){
+                    while(!isRankValid(rank)){
                         handleInputError("等级应为1，2，3，请重新输入：");
                         scanf("%d", &rank);
                     }
@@ -2436,7 +2437,7 @@ void modifyCompetition(StudentInfo *student) {
                     char competitionType;
                     scanf("%c", &competitionType);
                     //判断输入是否合法
-                    while(isCompetitionTypeValid(competitionType)){
+                    while(!isCompetitionTypeValid(competitionType)){
                         handleInputError("类别应为A，B，C，请重新输入：");
                         scanf("%c", &competitionType);
                     }
@@ -2583,14 +2584,14 @@ void displayByClass(StudentInfo *head) {
     printf("请输入年级：");
     scanf("%d", &grade);
     //判断输入是否在范围内
-    while (isGradeValid(grade)) {
+    while (!isGradeValid(grade)) {
         handleInputError("年级必须在1-4之间,请重新输入\n");
         scanf("%d", &grade);
     }
     printf("请输入班级：");
     scanf("%d", &classNumber);
     //判断输入是否在范围内
-    while (isClassValid(classNumber)) {
+    while (!isClassValid(classNumber)) {
         handleInputError("班级必须在为大于0的整数,请重新输入\n");
         scanf("%d", &classNumber);
     }
@@ -2647,7 +2648,7 @@ void displayByGrade(StudentInfo *head) {
     printf("请输入年级：");
     scanf("%d", &grade);
     //判断输入是否在范围内
-    while (isGradeValid(grade)) {
+    while (!isGradeValid(grade)) {
         handleInputError("年级必须在1-4之间,请重新输入\n");
         scanf("%d", &grade);
     }
@@ -2668,7 +2669,7 @@ void sortByGrade(StudentInfo **head) {
     int grade;
     scanf("%d", &grade);
     //判断输入是否在范围内
-    while (isGradeValid(grade)) {
+    while (!isGradeValid(grade)) {
         handleInputError("年级必须在1-4之间,请重新输入\n");
         scanf("%d", &grade);
     }
@@ -2731,7 +2732,7 @@ void sortByClass(StudentInfo **head){
     scanf("%d", &grade);
 
     //判断输入是否在范围内
-    while(isGradeValid(grade)){
+    while(!isGradeValid(grade)){
         handleInputError("年级必须在1-4之间,请重新输入\n");
         scanf("%d", &grade);
     }
@@ -2740,7 +2741,7 @@ void sortByClass(StudentInfo **head){
     int classNumber;
     scanf("%d", &classNumber);
     //判断输入是否是正整数
-    while (isClassValid(classNumber)) {
+    while (!isClassValid(classNumber)) {
         handleInputError("班级必须是正整数,请重新输入\n");
         scanf("%d", &classNumber);
     }
@@ -2817,19 +2818,22 @@ int isDigit(char c) {
 
 //判断年级是否合法
 int isGradeValid(int grade) {
-    return grade >= 1 && grade <= 4;
+    if (grade < 1 || grade > 4) {
+        return 0;
+    }
+    return 1;
 }
 
 //判断班级是否合法
 int isClassValid(int classNumber) {
-    if(classNumber <= 0) {
+    if(classNumber <= 0||!isDigit(classNumber)){
         return 0;
     }
     return 1;
 }
 
 // 判断分数是否合法
-int isScoreValid(float score) {
+int isScoreValid(float score){
     if (score < 0 || score > 100) {
         return 0;
     }
