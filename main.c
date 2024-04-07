@@ -188,8 +188,8 @@ int main() {
     }
     // 初始化管理员信息,用户名和密码均为admin
 
-
     loginSystem();// 进入系统
+
     if(!isSaved)saveToFile();//保存到文件
 
     freeMemory(&studentsList);//释放内存
@@ -1030,39 +1030,39 @@ StudentInfo *createStudent() {
 
 // 创建新学业成绩
 AcademicScoreNode *createAcademicScore() {
-        // 分配内存给新的AcademicScoreNode实例
-        AcademicScoreNode *newCourse = (AcademicScoreNode *)malloc(sizeof(AcademicScoreNode));
-        if (newCourse == NULL) {
-            // 如果内存分配失败，打印错误信息并退出程序
-            fprintf(stderr, "内存分配失败\n");
-            exit(EXIT_FAILURE);
-        }
-        // 初始化新课程信息
-        newCourse->next = NULL; // 初始化链表指针
-        strcpy(newCourse->courseName, "Unknown Course"); // 初始化课程名称
-        newCourse->score = 0.00f; // 初始化课程分数
-        newCourse->credit = 0.0f; // 初始化课程学分
-        newCourse->gpa = calculateSingleGPA(&newCourse->score); // 初始化课程绩点
-        printf("请输入课程信息：\n");
-        printf("课程名称: ");
-        scanf("%s", newCourse->courseName);
-        printf("分数: ");
+    // 分配内存给新的AcademicScoreNode实例
+    AcademicScoreNode *newCourse = (AcademicScoreNode *)malloc(sizeof(AcademicScoreNode));
+    if (newCourse == NULL) {
+        // 如果内存分配失败，打印错误信息并退出程序
+        fprintf(stderr, "内存分配失败\n");
+        exit(EXIT_FAILURE);
+    }
+    // 初始化新课程信息
+    newCourse->next = NULL; // 初始化链表指针
+    strcpy(newCourse->courseName, "Unknown Course"); // 初始化课程名称
+    newCourse->score = 0.00f; // 初始化课程分数
+    newCourse->credit = 0.0f; // 初始化课程学分
+    newCourse->gpa = calculateSingleGPA(&newCourse->score); // 初始化课程绩点
+    printf("请输入课程信息：\n");
+    printf("课程名称: ");
+    scanf("%s", newCourse->courseName);
+    printf("分数: ");
+    scanf("%f", &newCourse->score);
+    // 判断分数是否合法
+    while (!isScoreValid(newCourse->score)) {
+        handleInputError("分数应为0-100之间的数，请重新输入。\n");
         scanf("%f", &newCourse->score);
-        // 判断分数是否合法
-        while (!isScoreValid(newCourse->score)) {
-            handleInputError("分数应为0-100之间的数，请重新输入。\n");
-            scanf("%f", &newCourse->score);
-        }
-        printf("学分: ");
+    }
+    printf("学分: ");
+    scanf("%f", &newCourse->credit);
+    // 判断学分是否合法
+    while (!isCreditValid(newCourse->credit)) {
+        handleInputError("学分应为小于8数，请重新输入。\n");
         scanf("%f", &newCourse->credit);
-        // 判断学分是否合法
-        while (!isCreditValid(newCourse->credit)) {
-            handleInputError("学分应为小于8数，请重新输入。\n");
-            scanf("%f", &newCourse->credit);
-        }
-        newCourse->gpa = calculateSingleGPA(&newCourse->score); // 计算课程绩点
-        // 返回新创建的AcademicScoreNode指针
-        return newCourse;
+    }
+    newCourse->gpa = calculateSingleGPA(&newCourse->score); // 计算课程绩点
+    // 返回新创建的AcademicScoreNode指针
+    return newCourse;
 }
 
 // 创建新大学生创新创业计划项目
@@ -1945,7 +1945,7 @@ float calculateInnovationProjectGPA(InnovationProject *project) {
     if (project == NULL) {
         return gpa; // 如果传入的项目指针为空，则直接返回
     }
-if (project->isFinished == 1) {
+    if (project->isFinished == 1) {
         // 如果项目已结题，根据项目级别计算加分GPA
         if (strcmp(project->projectLevel, "国家级") == 0) {
             //第一负责人
@@ -2721,7 +2721,6 @@ void sortByGrade(StudentInfo **head) {
             break;
         case 4:
             sortList(&tempList, compareByTotalGPA);
-            displayAllStudents(tempList);
             break;
         case 5:
             return;
@@ -2794,13 +2793,13 @@ void sortByClass(StudentInfo **head){
             break;
         case 4:
             sortList(&tempList, compareByTotalGPA);
-            displayAllStudents(tempList);
             break;
         case 5:
             return;
         default:
             handleInputError("无效的选项");
     }
+    displayAllStudents(tempList);//显示排序后的学生信息
     freeMemory(&tempList);//释放临时链表的内存
 }
 

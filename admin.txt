@@ -1,8 +1,8 @@
 ##AdminStart##
-Username: admin2
-Password: admin2
-##AdminEnd##
-##AdminStart##
 Username: admin
 Password: admin
+##AdminEnd##
+##AdminStart##
+Username: admin2
+Password: admin2
 ##AdminEnd##
