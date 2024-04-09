@@ -135,7 +135,7 @@ void handleInputError(const char *message);//处理输入错误
 void displayAllStudents(StudentInfo *head);//显示所有学生信息概况
 void displayByClass(StudentInfo *head);//按班级显示学生信息
 void displayByGrade(StudentInfo *head);//按年级显示学生信息
-void sortList(StudentInfo **head, int (*compare)(const StudentInfo *, const StudentInfo *));//排序学生链表
+void sortList(StudentInfo **head, int (*compare)(const StudentInfo *, const StudentInfo *),int len);//排序学生链表
 int compareByStudentID(const StudentInfo *a, const StudentInfo *b);//按学号排序
 int compareByGPA(const StudentInfo *a, const StudentInfo *b);//按学业GPA排序
 int compareByAverageScore(const StudentInfo *a, const StudentInfo *b);//按加权平均分排序
@@ -1508,27 +1508,81 @@ void displayAllStudents(StudentInfo *head) {
 }
 
 //排序学生链表
-void sortList(StudentInfo **head, int (*compare)(const StudentInfo *, const StudentInfo *)) {
-    // 使用冒泡排序法对学生链表进行排序
-    if (*head == NULL) {
-        printf("学生信息为空。\n");
-        return;
-    }
-    StudentInfo *current = *head;
-    StudentInfo *next = NULL;
-    StudentInfo *temp = NULL;
-    while (current != NULL) {
+void sortList(StudentInfo **headRef, int (*compare)(const StudentInfo *, const StudentInfo *),int len) {
+    // 使用冒泡排序对学生链表进行排序
+    int i, j;
+    StudentInfo *current;
+    StudentInfo *next;
+    for (i = 0; i < len - 1; i++) {
+        current = *headRef;
         next = current->next;
-        while (next != NULL) {
+        for (j = 0; j < len - i - 1; j++) {
             if (compare(current, next) > 0) {
                 // 交换两个节点的数据
-                temp = current;
-                current = next;
-                next = temp;
+//                char studentID[STUDENT_ID_LENGTH+1];// 学号
+//                char name[MAX_NAME_LENGTH];// 姓名
+//                char password[MAX_PASSWORD_LENGTH+2];// 密码
+//                int classNumber;// 班级
+//                int grade;      //年级（大一、大二、大三、大四）
+//                float gpa;  // 学业GPA
+//                float totalCredit;// 总学分
+//                float qualityGpa;// 素质加分GPA
+//                float averageScore;// 加权平均分
+//                float totalGPA;// 总绩点
+//                AcademicScoreNode *academicScores;// 学业成绩
+//                InnovationProject *innovationProjects;// 大学生创新创业计划项目
+//                AcademicPaper *academicPapers;// 学术论文
+//                Competition *competitions;// 计算机类学科竞赛
+//                struct StudentInfo *next;// 指向下一个学生的指针
+                char tmpID[STUDENT_ID_LENGTH+1];
+                strcpy(tmpID, current->studentID);
+                strcpy(current->studentID, next->studentID);
+                strcpy(next->studentID, tmpID);
+                char tmpName[MAX_NAME_LENGTH];
+                strcpy(tmpName, current->name);
+                strcpy(current->name, next->name);
+                strcpy(next->name, tmpName);
+                char tmpPassword[MAX_PASSWORD_LENGTH+2];
+                strcpy(tmpPassword, current->password);
+                strcpy(current->password, next->password);
+                strcpy(next->password, tmpPassword);
+                int tmpClassNumber = current->classNumber;
+                current->classNumber = next->classNumber;
+                next->classNumber = tmpClassNumber;
+                int tmpGrade = current->grade;
+                current->grade = next->grade;
+                next->grade = tmpGrade;
+                float tmpGPA = current->gpa;
+                current->gpa = next->gpa;
+                next->gpa = tmpGPA;
+                float tmpTotalCredit = current->totalCredit;
+                current->totalCredit = next->totalCredit;
+                next->totalCredit = tmpTotalCredit;
+                float tmpQualityGpa = current->qualityGpa;
+                current->qualityGpa = next->qualityGpa;
+                next->qualityGpa = tmpQualityGpa;
+                float tmpAverageScore = current->averageScore;
+                current->averageScore = next->averageScore;
+                next->averageScore = tmpAverageScore;
+                float tmpTotalGPA = current->totalGPA;
+                current->totalGPA = next->totalGPA;
+                next->totalGPA = tmpTotalGPA;
+                AcademicScoreNode *tmpAcademicScores = current->academicScores;
+                current->academicScores = next->academicScores;
+                next->academicScores = tmpAcademicScores;
+                InnovationProject *tmpInnovationProjects = current->innovationProjects;
+                current->innovationProjects = next->innovationProjects;
+                next->innovationProjects = tmpInnovationProjects;
+                AcademicPaper *tmpAcademicPapers = current->academicPapers;
+                current->academicPapers = next->academicPapers;
+                next->academicPapers = tmpAcademicPapers;
+                Competition *tmpCompetitions = current->competitions;
+                current->competitions = next->competitions;
+                next->competitions = tmpCompetitions;
             }
+            current = current->next;
             next = next->next;
         }
-        current = current->next;
     }
 }
 
@@ -2712,6 +2766,7 @@ void sortByGrade(StudentInfo **head) {
     StudentInfo *tempList = NULL;
     // 创建一个临时链表用于存放按年级筛选的学生
     StudentInfo *current = *head;
+    int length = 0;
     while (current != NULL) {
         if (current->grade == grade) {
             StudentInfo *newStudent = (StudentInfo *)malloc(sizeof(StudentInfo));
@@ -2722,6 +2777,7 @@ void sortByGrade(StudentInfo **head) {
             memcpy(newStudent, current, sizeof(StudentInfo));//复制学生信息
             newStudent->next = NULL;
             insertStudent(&tempList, newStudent);//插入学生信息
+            length++;
         }
         current = current->next;
     }
@@ -2733,16 +2789,16 @@ void sortByGrade(StudentInfo **head) {
     }
     switch (choice) {
         case 1:
-            sortList(&tempList, compareByStudentID);
+            sortList(&tempList, compareByStudentID,length);
             break;
         case 2:
-            sortList(&tempList, compareByGPA);
+            sortList(&tempList, compareByGPA,length);
             break;
         case 3:
-            sortList(&tempList, compareByAverageScore);
+            sortList(&tempList, compareByAverageScore,length);
             break;
         case 4:
-            sortList(&tempList, compareByTotalGPA);
+            sortList(&tempList, compareByTotalGPA,length);
             break;
         case 5:
             return;
@@ -2784,6 +2840,7 @@ void sortByClass(StudentInfo **head){
     StudentInfo *tempList = NULL;
     // 创建一个临时链表用于存放按年级筛选的学生
     StudentInfo *current = *head;
+    int length = 0;
     while (current != NULL) {
         if (current->classNumber == classNumber) {
             StudentInfo *newStudent = (StudentInfo *)malloc(sizeof(StudentInfo));
@@ -2794,6 +2851,7 @@ void sortByClass(StudentInfo **head){
             memcpy(newStudent, current, sizeof(StudentInfo));//复制学生信息
             newStudent->next = NULL;
             insertStudent(&tempList, newStudent);//插入学生信息
+            length++;
         }
         current = current->next;
     }
@@ -2805,16 +2863,16 @@ void sortByClass(StudentInfo **head){
     }
     switch (choice) {
         case 1:
-            sortList(&tempList, compareByStudentID);
+            sortList(&tempList, compareByStudentID,length);
             break;
         case 2:
-            sortList(&tempList, compareByGPA);
+            sortList(&tempList, compareByGPA,length);
             break;
         case 3:
-            sortList(&tempList, compareByAverageScore);
+            sortList(&tempList, compareByAverageScore,length);
             break;
         case 4:
-            sortList(&tempList, compareByTotalGPA);
+            sortList(&tempList, compareByTotalGPA,length);
             break;
         case 5:
             return;
