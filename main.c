@@ -170,6 +170,7 @@ int isProjectLevelValid(const char *projectLevel);//判断项目级别是否合法
 int isRankValid(int rank);//判断获奖等级是否合法
 int isLeaderOrSecondLeaderValid(int isLeaderOrSecondLeader);//判断是否为负责人是否合法
 void calculateJournalLevel(AcademicPaper *paper);//计算学术论文期刊级别
+void freeTmpMemory(StudentInfo **head);//释放临时学业成绩内存
 
 // 主函数
 int main() {
@@ -1519,21 +1520,6 @@ void sortList(StudentInfo **headRef, int (*compare)(const StudentInfo *, const S
         for (j = 0; j < len - i - 1; j++) {
             if (compare(current, next) > 0) {
                 // 交换两个节点的数据
-//                char studentID[STUDENT_ID_LENGTH+1];// 学号
-//                char name[MAX_NAME_LENGTH];// 姓名
-//                char password[MAX_PASSWORD_LENGTH+2];// 密码
-//                int classNumber;// 班级
-//                int grade;      //年级（大一、大二、大三、大四）
-//                float gpa;  // 学业GPA
-//                float totalCredit;// 总学分
-//                float qualityGpa;// 素质加分GPA
-//                float averageScore;// 加权平均分
-//                float totalGPA;// 总绩点
-//                AcademicScoreNode *academicScores;// 学业成绩
-//                InnovationProject *innovationProjects;// 大学生创新创业计划项目
-//                AcademicPaper *academicPapers;// 学术论文
-//                Competition *competitions;// 计算机类学科竞赛
-//                struct StudentInfo *next;// 指向下一个学生的指针
                 char tmpID[STUDENT_ID_LENGTH+1];
                 strcpy(tmpID, current->studentID);
                 strcpy(current->studentID, next->studentID);
@@ -1858,7 +1844,7 @@ void loadFromFile() {
                     insertAcademicScore(newStudent, newScore);
                 }
             }else{
-                //多读了一行，回退一行
+                //回退一行
                 fseek(file, -strlen(buffer), SEEK_CUR);
             }
 
@@ -1887,7 +1873,6 @@ void loadFromFile() {
                 //回退一行
                 fseek(file, -strlen(buffer), SEEK_CUR);
             }
-
 
             // 读取学术论文链表
             if (fgets(buffer, sizeof(buffer), file) && strncmp(buffer, PAPER_START, strlen(PAPER_START)) == 0) {
@@ -2774,7 +2759,8 @@ void sortByGrade(StudentInfo **head) {
                 handleInputError("内存分配失败");
                 break;
             }
-            memcpy(newStudent, current, sizeof(StudentInfo));//复制学生信息
+            //复制学生信息
+            memcpy(newStudent, current, sizeof(StudentInfo));
             newStudent->next = NULL;
             insertStudent(&tempList, newStudent);//插入学生信息
             length++;
@@ -2806,7 +2792,7 @@ void sortByGrade(StudentInfo **head) {
             handleInputError("无效的选项");
     }
     displayAllStudents(tempList);//显示排序后的学生信息
-    freeMemory(&tempList);//释放临时链表的内存
+    freeTmpMemory(&tempList);//释放临时链表的内存
 }
 
 //按班级排序
@@ -2880,7 +2866,7 @@ void sortByClass(StudentInfo **head){
             handleInputError("无效的选项");
     }
     displayAllStudents(tempList);//显示排序后的学生信息
-    freeMemory(&tempList);//释放临时链表的内存
+    freeTmpMemory(&tempList);//释放临时链表的内存
 }
 
 //判断学号是否合法
@@ -3027,4 +3013,23 @@ void calculateJournalLevel(AcademicPaper *academicPaper){
     }else{
         academicPaper->journalLevel = 0;
     }
+}
+
+// 释放学生内存
+void freeTmpMemory(StudentInfo **head) {
+    // 检查学生列表头指针是否为空
+    if (*head == NULL) {
+        return; // 如果头指针为空，则没有内存需要释放
+    }
+    // 遍历并释放每个学生节点的学业成绩链表
+    StudentInfo *currentStudent = *head;
+    while (currentStudent != NULL) {
+        // 释放当前学生节点的内存
+        StudentInfo *tempStudent = currentStudent;
+        currentStudent = currentStudent->next;
+        free(tempStudent); // 释放节点内存
+    }
+
+    // 重置学生列表头指针为NULL
+    *head = NULL;
 }
