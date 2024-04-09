@@ -170,7 +170,7 @@ int isProjectLevelValid(const char *projectLevel);//判断项目级别是否合法
 int isRankValid(int rank);//判断获奖等级是否合法
 int isLeaderOrSecondLeaderValid(int isLeaderOrSecondLeader);//判断是否为负责人是否合法
 void calculateJournalLevel(AcademicPaper *paper);//计算学术论文期刊级别
-void freeTmpMemory(StudentInfo **head);//释放临时学业成绩内存
+void freeTmpMemory(StudentInfo **head);//释放临时学生链表内存
 
 // 主函数
 int main() {
@@ -1822,113 +1822,104 @@ void loadFromFile() {
 
             // 将新节点添加到学生链表中
             insertStudent(&studentsList, newStudent);
-            // 读取学业成绩链表，当读到##ScoreStart##时开始成绩录入，读到##ScoreEnd##时结束
-            if (fgets(buffer, sizeof(buffer), file) && strncmp(buffer, SCORE_START, strlen(SCORE_START)) == 0) {
-                while (fgets(buffer, sizeof(buffer), file) && strncmp(buffer, SCORE_END, strlen(SCORE_END)) != 0) {
-                    AcademicScoreNode* newScore = (AcademicScoreNode*)malloc(sizeof(AcademicScoreNode));
-                    if (newScore == NULL) {
-                        handleInputError("内存分配失败");
-                        break;
+            while(fgets(buffer, sizeof(buffer), file))
+            {
+                // 读取学业成绩链表，当读到##ScoreStart##时开始成绩录入，读到##ScoreEnd##时结束
+                if (strncmp(buffer, SCORE_START, strlen(SCORE_START)) == 0) {
+                    while (fgets(buffer, sizeof(buffer), file) && strncmp(buffer, SCORE_END, strlen(SCORE_END)) != 0) {
+                        AcademicScoreNode *newScore = (AcademicScoreNode *) malloc(sizeof(AcademicScoreNode));
+                        if (newScore == NULL) {
+                            handleInputError("内存分配失败");
+                            break;
+                        }
+                        memset(newScore, 0, sizeof(AcademicScoreNode));
+                        //fgets(buffer, sizeof(buffer), file);
+                        sscanf(buffer, "CourseName: %s", newScore->courseName);
+
+                        fgets(buffer, sizeof(buffer), file);
+
+                        sscanf(buffer, "Score: %f", &newScore->score);
+                        fgets(buffer, sizeof(buffer), file);
+                        sscanf(buffer, "Credit: %f", &newScore->credit);
+                        fgets(buffer, sizeof(buffer), file);
+                        sscanf(buffer, "GPA: %f", &newScore->gpa);
+                        insertAcademicScore(newStudent, newScore);
                     }
-                    memset(newScore, 0, sizeof(AcademicScoreNode));
-                    //fgets(buffer, sizeof(buffer), file);
-                    sscanf(buffer, "CourseName: %s", newScore->courseName);
-
-                    fgets(buffer, sizeof(buffer), file);
-
-                    sscanf(buffer, "Score: %f", &newScore->score);
-                    fgets(buffer, sizeof(buffer), file);
-                    sscanf(buffer, "Credit: %f", &newScore->credit);
-                    fgets(buffer, sizeof(buffer), file);
-                    sscanf(buffer, "GPA: %f", &newScore->gpa);
-                    insertAcademicScore(newStudent, newScore);
                 }
-            }else{
-                //回退一行
-                fseek(file, -strlen(buffer), SEEK_CUR);
-            }
-
-            // 读取大学生创新创业计划项目链表
-            if (fgets(buffer, sizeof(buffer), file) && strncmp(buffer, PROJECT_START, strlen(PROJECT_START)) == 0) {
-                while (fgets(buffer, sizeof(buffer), file) && strncmp(buffer, PROJECT_END, strlen(PROJECT_END)) != 0) {
-                    InnovationProject* newProject = (InnovationProject*)malloc(sizeof(InnovationProject));
-                    if (newProject == NULL) {
-                        handleInputError("内存分配失败");
-                        break;
+                // 读取大学生创新创业计划项目链表
+                if (strncmp(buffer, PROJECT_START, strlen(PROJECT_START)) == 0) {
+                    while (fgets(buffer, sizeof(buffer), file) && strncmp(buffer, PROJECT_END, strlen(PROJECT_END)) != 0) {
+                        InnovationProject* newProject = (InnovationProject*)malloc(sizeof(InnovationProject));
+                        if (newProject == NULL) {
+                            handleInputError("内存分配失败");
+                            break;
+                        }
+                        memset(newProject, 0, sizeof(InnovationProject));
+                        //fgets(buffer, sizeof(buffer), file);
+                        sscanf(buffer, "ProjectName: %s", newProject->projectName);
+                        fgets(buffer, sizeof(buffer), file);
+                        sscanf(buffer, "GPA: %f", &newProject->gpa);
+                        fgets(buffer, sizeof(buffer), file);
+                        sscanf(buffer, "LeaderOrSecondLeader: %d", &newProject->isLeaderOrSecondLeader);
+                        fgets(buffer, sizeof(buffer), file);
+                        sscanf(buffer, "ProjectLevel: %s", newProject->projectLevel);
+                        fgets(buffer, sizeof(buffer), file);
+                        sscanf(buffer, "IsFinished: %d", &newProject->isFinished);
+                        insertInnovationProject(newStudent, newProject);
                     }
-                    memset(newProject, 0, sizeof(InnovationProject));
-                    //fgets(buffer, sizeof(buffer), file);
-                    sscanf(buffer, "ProjectName: %s", newProject->projectName);
-                    fgets(buffer, sizeof(buffer), file);
-                    sscanf(buffer, "GPA: %f", &newProject->gpa);
-                    fgets(buffer, sizeof(buffer), file);
-                    sscanf(buffer, "LeaderOrSecondLeader: %d", &newProject->isLeaderOrSecondLeader);
-                    fgets(buffer, sizeof(buffer), file);
-                    sscanf(buffer, "ProjectLevel: %s", newProject->projectLevel);
-                    fgets(buffer, sizeof(buffer), file);
-                    sscanf(buffer, "IsFinished: %d", &newProject->isFinished);
-                    insertInnovationProject(newStudent, newProject);
                 }
-            }else{
-                //回退一行
-                fseek(file, -strlen(buffer), SEEK_CUR);
-            }
 
-            // 读取学术论文链表
-            if (fgets(buffer, sizeof(buffer), file) && strncmp(buffer, PAPER_START, strlen(PAPER_START)) == 0) {
-                while (fgets(buffer, sizeof(buffer), file) && strncmp(buffer, PAPER_END, strlen(PAPER_END)) != 0) {
-                    AcademicPaper* newPaper = (AcademicPaper*)malloc(sizeof(AcademicPaper));
-                    if (newPaper == NULL) {
-                        handleInputError("内存分配失败");
-                        break;
+                // 读取学术论文链表
+                if (strncmp(buffer, PAPER_START, strlen(PAPER_START)) == 0) {
+                    while (fgets(buffer, sizeof(buffer), file) && strncmp(buffer, PAPER_END, strlen(PAPER_END)) != 0) {
+                        AcademicPaper* newPaper = (AcademicPaper*)malloc(sizeof(AcademicPaper));
+                        if (newPaper == NULL) {
+                            handleInputError("内存分配失败");
+                            break;
+                        }
+                        memset(newPaper, 0, sizeof(AcademicPaper));
+                        //fgets(buffer, sizeof(buffer), file);
+                        sscanf(buffer, "Title: %s", newPaper->title);
+                        fgets(buffer, sizeof(buffer), file);
+                        sscanf(buffer, "JournalName: %s", newPaper->journalName);
+                        fgets(buffer, sizeof(buffer), file);
+                        sscanf(buffer, "IsFirstAuthor: %d", &newPaper->isFirstAuthor);
+                        fgets(buffer, sizeof(buffer), file);
+                        sscanf(buffer, "JournalLevel: %d", &newPaper->journalLevel);
+                        fgets(buffer, sizeof(buffer), file);
+                        sscanf(buffer, "GPA: %f", &newPaper->gpa);
+                        insertAcademicPaper(newStudent, newPaper);
                     }
-                    memset(newPaper, 0, sizeof(AcademicPaper));
-                    //fgets(buffer, sizeof(buffer), file);
-                    sscanf(buffer, "Title: %s", newPaper->title);
-                    fgets(buffer, sizeof(buffer), file);
-                    sscanf(buffer, "JournalName: %s", newPaper->journalName);
-                    fgets(buffer, sizeof(buffer), file);
-                    sscanf(buffer, "IsFirstAuthor: %d", &newPaper->isFirstAuthor);
-                    fgets(buffer, sizeof(buffer), file);
-                    sscanf(buffer, "JournalLevel: %d", &newPaper->journalLevel);
-                    fgets(buffer, sizeof(buffer), file);
-                    sscanf(buffer, "GPA: %f", &newPaper->gpa);
-                    insertAcademicPaper(newStudent, newPaper);
                 }
-            }else{
-                //回退一行
-                fseek(file, -strlen(buffer), SEEK_CUR);
-            }
 
-            // 读取计算机类学科竞赛链表
-            if (fgets(buffer, sizeof(buffer), file) && strncmp(buffer, COMPETITION_START, strlen(COMPETITION_START)) == 0) {
-                while (fgets(buffer, sizeof(buffer), file) && strncmp(buffer, COMPETITION_END, strlen(COMPETITION_END)) != 0) {
-                    Competition* newCompetition = (Competition*)malloc(sizeof(Competition));
-                    if (newCompetition == NULL) {
-                        handleInputError("内存分配失败");
-                        break;
+                // 读取计算机类学科竞赛链表
+                if (strncmp(buffer, COMPETITION_START, strlen(COMPETITION_START)) == 0) {
+                    while (fgets(buffer, sizeof(buffer), file) && strncmp(buffer, COMPETITION_END, strlen(COMPETITION_END)) != 0) {
+                        Competition* newCompetition = (Competition*)malloc(sizeof(Competition));
+                        if (newCompetition == NULL) {
+                            handleInputError("内存分配失败");
+                            break;
+                        }
+                        memset(newCompetition, 0, sizeof(Competition));
+                        //fgets(buffer, sizeof(buffer), file);
+                        sscanf(buffer, "CompetitionName: %s", newCompetition->competitionName);
+                        fgets(buffer, sizeof(buffer), file);
+                        sscanf(buffer, "TeamSize: %d", &newCompetition->teamSize);
+                        fgets(buffer, sizeof(buffer), file);
+                        sscanf(buffer, "CompetitionLevel: %s", newCompetition->competitionLevel);
+                        fgets(buffer, sizeof(buffer), file);
+                        sscanf(buffer, "Rank: %d", &newCompetition->rank);
+                        fgets(buffer, sizeof(buffer), file);
+                        sscanf(buffer, "CompetitionType: %c", &newCompetition->competitionType);
+                        fgets(buffer, sizeof(buffer), file);
+                        sscanf(buffer, "GPA: %f", &newCompetition->gpa);
+                        insertCompetition(newStudent, newCompetition);
                     }
-                    memset(newCompetition, 0, sizeof(Competition));
-                    //fgets(buffer, sizeof(buffer), file);
-                    sscanf(buffer, "CompetitionName: %s", newCompetition->competitionName);
-                    fgets(buffer, sizeof(buffer), file);
-                    sscanf(buffer, "TeamSize: %d", &newCompetition->teamSize);
-                    fgets(buffer, sizeof(buffer), file);
-                    sscanf(buffer, "CompetitionLevel: %s", newCompetition->competitionLevel);
-                    fgets(buffer, sizeof(buffer), file);
-                    sscanf(buffer, "Rank: %d", &newCompetition->rank);
-                    fgets(buffer, sizeof(buffer), file);
-                    sscanf(buffer, "CompetitionType: %c", &newCompetition->competitionType);
-                    fgets(buffer, sizeof(buffer), file);
-                    sscanf(buffer, "GPA: %f", &newCompetition->gpa);
-                    insertCompetition(newStudent, newCompetition);
                 }
-            }else{
-                //回退一行
-                fseek(file, -strlen(buffer), SEEK_CUR);
+                if (strncmp(buffer, STUDENT_END, strlen(STUDENT_END)) == 0) {
+                    break;
+                }
             }
-            // 跳过学生记录结束标记
-            fgets(buffer, sizeof(buffer), file);
         }
     }
     fclose(file); // 关闭文件
