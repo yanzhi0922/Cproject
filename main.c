@@ -1509,22 +1509,27 @@ void displayAllStudents(StudentInfo *head) {
 
 //排序学生链表
 void sortList(StudentInfo **head, int (*compare)(const StudentInfo *, const StudentInfo *)) {
-    int swapped;
-    StudentInfo *current=NULL;
-    do {
-        swapped = 0;
-        current = *head;
-        while (current && current->next) {
-            if ((*compare)(current, current->next) > 0) {
+    // 使用冒泡排序法对学生链表进行排序
+    if (*head == NULL) {
+        printf("学生信息为空。\n");
+        return;
+    }
+    StudentInfo *current = *head;
+    StudentInfo *next = NULL;
+    StudentInfo *temp = NULL;
+    while (current != NULL) {
+        next = current->next;
+        while (next != NULL) {
+            if (compare(current, next) > 0) {
                 // 交换两个节点的数据
-                StudentInfo temp = *current;
-                *current = *(current->next);
-                *(current->next) = temp;
-                swapped = 1;
+                temp = current;
+                current = next;
+                next = temp;
             }
-            current = current->next;
+            next = next->next;
         }
-    } while (swapped);
+        current = current->next;
+    }
 }
 
 // 比较函数：按学号排序
@@ -1786,9 +1791,11 @@ void loadFromFile() {
                         break;
                     }
                     memset(newScore, 0, sizeof(AcademicScoreNode));
-                    fgets(buffer, sizeof(buffer), file);
+                    //fgets(buffer, sizeof(buffer), file);
                     sscanf(buffer, "CourseName: %s", newScore->courseName);
+
                     fgets(buffer, sizeof(buffer), file);
+
                     sscanf(buffer, "Score: %f", &newScore->score);
                     fgets(buffer, sizeof(buffer), file);
                     sscanf(buffer, "Credit: %f", &newScore->credit);
@@ -1796,6 +1803,9 @@ void loadFromFile() {
                     sscanf(buffer, "GPA: %f", &newScore->gpa);
                     insertAcademicScore(newStudent, newScore);
                 }
+            }else{
+                //多读了一行，回退一行
+                fseek(file, -strlen(buffer), SEEK_CUR);
             }
 
             // 读取大学生创新创业计划项目链表
@@ -1807,7 +1817,7 @@ void loadFromFile() {
                         break;
                     }
                     memset(newProject, 0, sizeof(InnovationProject));
-                    fgets(buffer, sizeof(buffer), file);
+                    //fgets(buffer, sizeof(buffer), file);
                     sscanf(buffer, "ProjectName: %s", newProject->projectName);
                     fgets(buffer, sizeof(buffer), file);
                     sscanf(buffer, "GPA: %f", &newProject->gpa);
@@ -1819,6 +1829,9 @@ void loadFromFile() {
                     sscanf(buffer, "IsFinished: %d", &newProject->isFinished);
                     insertInnovationProject(newStudent, newProject);
                 }
+            }else{
+                //回退一行
+                fseek(file, -strlen(buffer), SEEK_CUR);
             }
 
 
@@ -1831,7 +1844,7 @@ void loadFromFile() {
                         break;
                     }
                     memset(newPaper, 0, sizeof(AcademicPaper));
-                    fgets(buffer, sizeof(buffer), file);
+                    //fgets(buffer, sizeof(buffer), file);
                     sscanf(buffer, "Title: %s", newPaper->title);
                     fgets(buffer, sizeof(buffer), file);
                     sscanf(buffer, "JournalName: %s", newPaper->journalName);
@@ -1843,6 +1856,9 @@ void loadFromFile() {
                     sscanf(buffer, "GPA: %f", &newPaper->gpa);
                     insertAcademicPaper(newStudent, newPaper);
                 }
+            }else{
+                //回退一行
+                fseek(file, -strlen(buffer), SEEK_CUR);
             }
 
             // 读取计算机类学科竞赛链表
@@ -1854,7 +1870,7 @@ void loadFromFile() {
                         break;
                     }
                     memset(newCompetition, 0, sizeof(Competition));
-                    fgets(buffer, sizeof(buffer), file);
+                    //fgets(buffer, sizeof(buffer), file);
                     sscanf(buffer, "CompetitionName: %s", newCompetition->competitionName);
                     fgets(buffer, sizeof(buffer), file);
                     sscanf(buffer, "TeamSize: %d", &newCompetition->teamSize);
@@ -1868,6 +1884,9 @@ void loadFromFile() {
                     sscanf(buffer, "GPA: %f", &newCompetition->gpa);
                     insertCompetition(newStudent, newCompetition);
                 }
+            }else{
+                //回退一行
+                fseek(file, -strlen(buffer), SEEK_CUR);
             }
             // 跳过学生记录结束标记
             fgets(buffer, sizeof(buffer), file);
