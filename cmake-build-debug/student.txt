@@ -1,0 +1,117 @@
+##StudentStart##
+StudentID: 45678901
+Name: 赵六
+Password: 123456
+Grade: 2
+ClassNumber: 1
+GPA: 4.000000
+TotalCredit: 6.00
+QualityGPA: 0.00
+AverageScore: 93.149994
+TotalGPA: 4.000000
+##ScoreStart##
+CourseName: 微积分A3
+Score: 95.099998
+Credit: 3.00
+GPA: 4.00
+CourseName: 工程制图A
+Score: 91.199997
+Credit: 3.00
+GPA: 4.00
+##ScoreEnd##
+##ProjectStart##
+ProjectName: 强化学习
+GPA: 0.00
+LeaderOrSecondLeader: 1
+ProjectLevel: 省级
+IsFinished: 1
+##ProjectEnd##
+##StudentEnd##
+##StudentStart##
+StudentID: 12345678
+Name: 张三
+Password: 123456
+Grade: 2
+ClassNumber: 1
+GPA: 4.000000
+TotalCredit: 7.00
+QualityGPA: 0.10
+AverageScore: 97.599991
+TotalGPA: 4.100000
+##ScoreStart##
+CourseName: 微积分A1
+Score: 98.699997
+Credit: 3.50
+GPA: 4.00
+CourseName: 微积分A2
+Score: 96.500000
+Credit: 3.50
+GPA: 4.00
+##ScoreEnd##
+##ProjectStart##
+ProjectName: 深度强化学习
+GPA: 0.10
+LeaderOrSecondLeader: 1
+ProjectLevel: 国家级
+IsFinished: 1
+##ProjectEnd##
+##StudentEnd##
+##StudentStart##
+StudentID: 23456789
+Name: 李四
+Password: 123456
+Grade: 2
+ClassNumber: 1
+GPA: 4.000000
+TotalCredit: 7.00
+QualityGPA: 0.20
+AverageScore: 93.349991
+TotalGPA: 4.200000
+##ScoreStart##
+CourseName: 线性代数
+Score: 91.199997
+Credit: 3.50
+GPA: 4.00
+CourseName: 程序设计基础
+Score: 95.500000
+Credit: 3.50
+GPA: 4.00
+##ScoreEnd##
+##PaperStart##
+Title: 无人机
+JournalName: CCF-A期刊
+IsFirstAuthor: 1
+JournalLevel: 2
+GPA: 0.20
+##PaperEnd##
+##StudentEnd##
+##StudentStart##
+StudentID: 98745632
+Name: 王五
+Password: 123456
+Grade: 2
+ClassNumber: 1
+GPA: 4.000000
+TotalCredit: 8.00
+QualityGPA: 0.00
+AverageScore: 95.500000
+TotalGPA: 4.000000
+##ScoreStart##
+CourseName: 数据结构
+Score: 98.900002
+Credit: 4.00
+GPA: 4.00
+CourseName: 计算机组成原理
+Score: 92.099998
+Credit: 4.00
+GPA: 4.00
+##ScoreEnd##
+##CompetitionStart##
+CompetitionName: 蓝桥杯
+TeamSize: 1
+CompetitionLevel: 省级
+Rank: 1
+CompetitionType: C
+GPA: 0.00
+##CompetitionEnd##
+##StudentEnd##

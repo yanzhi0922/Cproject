@@ -24,7 +24,7 @@
 
 // 学业成绩结构体
 typedef struct AcademicScoreNode {
-    char courseName[MAX_NAME_LENGTH];
+    char courseName[MAX_NAME_LENGTH];// 课程名
     float score;    // 分数
     float credit; // 学分
     float gpa; // 单门课程绩点
@@ -35,7 +35,7 @@ typedef struct AcademicScoreNode {
 typedef struct InnovationProject {
     char projectName[MAX_NAME_LENGTH]; // 项目名称
     float gpa; // 加分值
-    int isLeaderOrSecondLeader;// 是否为项目负责人,是否为第二负责人，国家级优秀结题项目负责人加0.1 GPA，第二名加0.05 GPA
+    int isLeaderOrSecondLeader;// 是否为项目负责人,是否为第二负责人
     char projectLevel[5];// 项目级别，国家级，省级，校级
     int isFinished;    // 是否结题
 } InnovationProject;
@@ -45,10 +45,7 @@ typedef struct AcademicPaper {
     char title[MAX_NAME_LENGTH]; // 论文标题
     char journalName[MAX_NAME_LENGTH]; // 期刊类名
     int isFirstAuthor; // 是否为第一作者
-
-    //期刊级别，顶级加0.4，一级期刊加0.2 GPA，二级期刊加0.1 GPA，三级期刊加0.05 GPA，四级期刊加0.02 GPA，五级期刊加0.01 GPA
-    int journalLevel;
-
+    int journalLevel; //期刊级别，由期刊类名自动判断，此处只用于数字标记
     float gpa; // 加分值
     struct AcademicPaper *next;
 } AcademicPaper;
@@ -85,8 +82,8 @@ typedef struct StudentInfo {
 
 // 管理员信息结构体
 typedef struct AdminInfo {
-    char username[MAX_NAME_LENGTH];
-    char password[MAX_PASSWORD_LENGTH];
+    char username[MAX_NAME_LENGTH];// 用户名
+    char password[MAX_PASSWORD_LENGTH];// 密码
     struct AdminInfo *next;
 } AdminInfo;
 
@@ -188,7 +185,7 @@ int main() {
         admin->next = NULL;
         adminsList = admin;
     }
-    // 初始化管理员信息,用户名和密码均为admin
+    // 如果没有读取到管理员，初始化管理员信息,用户名和密码均为admin
 
     loginSystem();// 进入系统
 
@@ -201,26 +198,18 @@ int main() {
 
 // 登录系统
 void loginSystem() {
-    int choice;
+    char choice[MAX_NAME_LENGTH];
     printf("请选择登录类型：\n1. 学生\n2. 管理员\n");
-    scanf("%d", &choice);
-    while (choice != 1 && choice != 2) {
-        printf("无效的选择，请重新输入。\n");
-        scanf("%d", &choice);
+    scanf("%s", choice);
+    //判断选择是否合法
+    while (strcmp(choice, "1") != 0 && strcmp(choice, "2") != 0) {
+        handleInputError("选项应为1或2，请重新输入。\n");
+        scanf("%s", choice);
     }
-    switch (choice) {
-        case 1:{
-            studentLogin();
-            break;
-        }
-        case 2:{
-            adminLogin();
-            break;
-        }
-        default: {
-            printf("无效的选择。\n");
-            exit(1);
-        }
+    if (strcmp(choice, "1") == 0) {
+        studentLogin();
+    } else if (strcmp(choice, "2") == 0) {
+        adminLogin();
     }
 }
 
@@ -319,45 +308,41 @@ void addCourse(StudentInfo *student) {
 
 // 添加素质加分项目
 void addQualityProject(StudentInfo *student) {
-    int choice;
-    printf("请选择加分项目类型：\n");
-    printf("1. 大学生创新创业计划项目\n");
-    printf("2. 学术论文\n");
-    printf("3. 计算机类学科竞赛\n");
-    printf("4. 返回\n");
-    scanf("%d", &choice);
-    //判断选择是否合法
-    while (choice != 1 && choice != 2 && choice != 3 && choice != 4) {
-        printf("无效的选项，请重新输入。\n");
-        scanf("%d", &choice);
-    }
-    switch (choice) {
-        case 1:{
+    char choice[MAX_NAME_LENGTH];
+    do{
+        printf("请选择加分项目类型：\n");
+        printf("1. 大学生创新创业计划项目\n");
+        printf("2. 学术论文\n");
+        printf("3. 计算机类学科竞赛\n");
+        printf("4. 返回\n");
+        scanf("%s", choice);
+        //判断选择是否合法
+        while (strcmp(choice, "1") != 0 && strcmp(choice, "2") != 0 && strcmp(choice, "3") != 0 && strcmp(choice, "4") != 0) {
+            handleInputError("选项应为1-4之间的数，请重新输入。\n");
+            scanf("%s", choice);
+        }
+        if (strcmp(choice, "1") == 0) {
             InnovationProject *newProject = createInnovationProject();
             insertInnovationProject(student, newProject);
+            // 更新GPA、总学分、加权平均分、总绩点
+            calculateAcademics(student);
             printf("大学生创新创业计划项目添加成功。\n");
-            break;
-        }
-        case 2:{
+        } else if (strcmp(choice, "2") == 0) {
             AcademicPaper *newPaper = createAcademicPaper();
             insertAcademicPaper(student, newPaper);
+            // 更新GPA、总学分、加权平均分、总绩点
+            calculateAcademics(student);
             printf("学术论文添加成功。\n");
-            break;
-        }
-        case 3:{
+        } else if (strcmp(choice, "3") == 0) {
             Competition *newCompetition = createCompetition();
             insertCompetition(student, newCompetition);
+            // 更新GPA、总学分、加权平均分、总绩点
+            calculateAcademics(student);
             printf("计算机类学科竞赛添加成功。\n");
-            break;
-        }
-        case 4:{
+        } else if (strcmp(choice, "4") == 0) {
             printf("返回。\n");
-            return; // 返回上一级菜单
         }
-        default: {
-            printf("无效的选项。\n");
-        }
-    }
+    }while(strcmp(choice, "4") != 0);
 }
 
 // 编辑学生成绩或删除学生
@@ -372,82 +357,63 @@ void modifyScoreMenu() {
     }
     StudentInfo *student = findStudentByID(studentID);
     if (student != NULL) {
-        int choice;
-        printf("请选择修改类型：\n");
-        printf("1. 修改学业成绩\n");
-        printf("2. 添加学业成绩\n");
-        printf("3. 修改素质加分\n");
-        printf("4. 添加素质加分\n");
-        printf("5. 修改年级\n");
-        printf("6. 修改班级\n");
-        printf("7. 删除学生\n");
-        printf("8. 返回\n");
-        scanf("%d", &choice);
-        //判断选择是否合法
-        while (choice != 1 && choice != 2 && choice != 3 && choice != 4 && choice != 5 && choice != 6 && choice != 7 && choice != 8) {
-            handleInputError("选项应为1-8之间的数，请重新输入。\n");
-            scanf("%d", &choice);
-        }
-        switch (choice) {
-            case 1:{
-                // 编辑学业成绩
+        char choice[MAX_NAME_LENGTH];
+        do{
+            printf("请选择修改类型：\n");
+            printf("1. 修改学业成绩\n");
+            printf("2. 添加学业成绩\n");
+            printf("3. 修改素质加分\n");
+            printf("4. 添加素质加分\n");
+            printf("5. 修改年级\n");
+            printf("6. 修改班级\n");
+            printf("7. 删除学生\n");
+            printf("8. 返回\n");
+            scanf("%s", choice);
+            //判断选择是否合法
+            while (strcmp(choice, "1") != 0 && strcmp(choice, "2") != 0 && strcmp(choice, "3") != 0 && strcmp(choice, "4") != 0 && strcmp(choice, "5") != 0 && strcmp(choice, "6") != 0 && strcmp(choice, "7") != 0 && strcmp(choice, "8") != 0) {
+                handleInputError("选项应为1-8之间的数，请重新输入。\n");
+                scanf("%s", choice);
+            }
+            if (strcmp(choice, "1") == 0) {
                 modifyAcademicScore(student);
-                break;
-            }
-            case 2:{
-                // 添加学业成绩
+            } else if (strcmp(choice, "2") == 0) {
                 addCourse(student);
-                break;
-            }
-            case 3:{
-                // 编辑素质加分
+            } else if (strcmp(choice, "3") == 0) {
                 modifyQualityScore(student);
-                break;
-            }
-            case 4:{
-                // 添加素质加分
+            } else if (strcmp(choice, "4") == 0) {
                 addQualityProject(student);
-                break;
-            }
-            case 5:{
-                // 修改年级
-                printf("请输入新年级：（1.大一 2.大二 3.大三 4.大四）");
-                scanf("%d", &student->grade);
+            } else if (strcmp(choice, "5") == 0) {
+                int grade;
+                printf("请输入新年级：");
+                scanf("%d", &grade);
                 //判断年级是否合法
-                while (!isGradeValid(student->grade)) {
-                    handleInputError("年级应为1-4之间的数(1.大一 2.大二 3.大三 4.大四)，请重新输入。\n");
-                    scanf("%d", &student->grade);
+                while (!isGradeValid(grade)) {
+                    handleInputError("年级应为1-4之间的数，请重新输入。\n");
+                    scanf("%d", &grade);
                 }
-                break;
-            }
-            case 6:{
-                // 修改班级
+                student->grade = grade;
+                printf("年级修改成功。\n");
+            } else if (strcmp(choice, "6") == 0) {
+                int classNumber;
                 printf("请输入新班级：");
-                scanf("%d", &student->classNumber);
+                scanf("%d", &classNumber);
                 //判断班级是否合法
-                while (!isClassValid(student->classNumber)) {
-                    handleInputError("班级应为大于0的数，请重新输入。\n");
-                    scanf("%d", &student->classNumber);
+                while (!isClassValid(classNumber)) {
+                    handleInputError("班级应为1-20之间的数，请重新输入。\n");
+                    scanf("%d", &classNumber);
                 }
-                break;
-            }
-            case 7:{
-                // 删除学生
+                student->classNumber = classNumber;
+                printf("班级修改成功。\n");
+            } else if (strcmp(choice, "7") == 0) {
                 deleteStudentRecord(&studentsList, studentID);
-                break;
-            }
-            case 8:{
+                printf("学生删除成功。\n");
+            } else if (strcmp(choice, "8") == 0) {
                 printf("返回。\n");
-                // 返回上一级菜单
-                break;
             }
-            default: {
-                printf("无效的选项。\n");
-            }
-        }
-        // 更新GPA、总学分、加权平均分、总绩点
-        calculateAcademics(student);
-        printf("成绩修改成功。\n");
+            // 更新GPA、总学分、加权平均分、总绩点
+            calculateAcademics(student);
+            printf("成绩修改成功。\n");
+        }while(strcmp(choice, "8") != 0);
     } else {
         printf("未找到学生信息。\n");
     }
@@ -456,34 +422,28 @@ void modifyScoreMenu() {
 // 排序学生
 void sortStudentsMenu() {
     // 根据GPA或其他标准对学生列表进行排序
-    int choice;
-    printf("请选择排序范围：\n");
-    printf("1. 按年级范围排序\n");
-    printf("2. 按班级范围排序\n");
-    printf("3. 返回\n");
-    scanf("%d", &choice);
-    //判断选择是否合法
-    while (choice != 1 && choice != 2 && choice != 3) {
-        handleInputError("选项应为1-3之间的数，请重新输入。\n");
-        scanf("%d", &choice);
-    }
-    switch (choice) {
-        case 1:{
+    char choice[MAX_NAME_LENGTH];
+    do{
+        printf("请选择排序范围：\n");
+        printf("1. 按年级范围排序\n");
+        printf("2. 按班级范围排序\n");
+        printf("3. 返回\n");
+        scanf("%s", choice);
+        //判断选择是否合法
+        while (strcmp(choice, "1") != 0 && strcmp(choice, "2") != 0 && strcmp(choice, "3") != 0) {
+            handleInputError("选项应为1-3之间的数，请重新输入。\n");
+            scanf("%s", choice);
+        }
+        if (strcmp(choice, "1") == 0) {
             sortByGrade(&studentsList);
-            break;
-        }
-        case 2:{
+            printf("按年级排序完成。\n");
+        } else if (strcmp(choice, "2") == 0) {
             sortByClass(&studentsList);
-            break;
-        }
-        case 3:{
+            printf("按班级排序完成。\n");
+        } else if (strcmp(choice, "3") == 0) {
             printf("返回。\n");
-            break;
         }
-        default: {
-            printf("无效的选项。\n");
-        }
-    }
+    }while(strcmp(choice, "3") != 0);
 }
 
 // 显示指定学生信息概况
@@ -503,39 +463,31 @@ void displayStudentInfo(StudentInfo *student) {
     printf("加权平均分: %.2f\n", student->averageScore);
     printf("总绩点: %.2f\n", student->totalGPA);
     printf("学生信息显示完成。\n");
-    int choice;
-    printf("是否要继续显示详细信息：\n");
-    printf("1. 显示所有学业成绩\n");
-    printf("2. 显示所有素质加分\n");
-    printf("3. 返回\n");
-    scanf("%d", &choice);
-    //判断选择是否合法
-    while (choice != 1 && choice != 2 && choice != 3) {
-        handleInputError("选项应为1-3之间的数，请重新输入。\n");
-        scanf("%d", &choice);
-    }
-    switch (choice) {
-        case 1:{
-            displayAcademicScore(student);
-            break;
+    char choice[MAX_NAME_LENGTH];
+    do{
+        printf("是否要继续显示详细信息：\n");
+        printf("1. 显示所有学业成绩\n");
+        printf("2. 显示所有素质加分\n");
+        printf("3. 返回\n");
+        scanf("%s", choice);
+        //判断选择是否合法
+        while (strcmp(choice, "1") != 0 && strcmp(choice, "2") != 0 && strcmp(choice, "3") != 0) {
+            handleInputError("选项应为1-3之间的数，请重新输入。\n");
+            scanf("%s", choice);
         }
-        case 2:{
-            displayQualityScore(student);
-            break;
-        }
-        case 3:{
+        if (strcmp(choice, "1") == 0) {
+            displayAcademicScore(student);//显示学业成绩
+        } else if (strcmp(choice, "2") == 0) {
+            displayQualityScore(student);//显示素质加分
+        } else if (strcmp(choice, "3") == 0) {
             printf("返回。\n");
-            break;
         }
-        default: {
-            printf("无效的选项。\n");
-        }
-    }
+    }while(strcmp(choice, "3") != 0);
 }
 
 // 显示管理员菜单
 void displayAdminMenu(AdminInfo *admin) {
-    int choice;
+    char choice[MAX_NAME_LENGTH];
     do {
         printf("管理员菜单：\n");
         printf("1. 添加新学生\n");
@@ -549,145 +501,89 @@ void displayAdminMenu(AdminInfo *admin) {
         printf("9. 更改密码\n");
         printf("10. 退出\n");
         printf("请选择操作：");
-        scanf("%d", &choice);
+        scanf("%s", choice);
         //判断选择是否合法
-        while (choice < 1 || choice > 10) {
+        while (strcmp(choice, "1") != 0 && strcmp(choice, "2") != 0 && strcmp(choice, "3") != 0 && strcmp(choice, "4") != 0 && strcmp(choice, "5") != 0 && strcmp(choice, "6") != 0 && strcmp(choice, "7") != 0 && strcmp(choice, "8") != 0 && strcmp(choice, "9") != 0 && strcmp(choice, "10") != 0) {
             handleInputError("选项应为1-10之间的数，请重新输入。\n");
-            scanf("%d", &choice);
+            scanf("%s", choice);
         }
-        switch (choice) {
-            case 1:{
-                // 添加学生账号
-                addStudentAccount();
-                break;
-            }
-            case 2:{
-                // 添加管理员账号
-                addAdminAccount();
-                break;
-            }
-            case 3:{
-                // 编辑学生成绩或删除学生
-                modifyScoreMenu();
-                break;
-            }
-            case 4:{
-                // 排序学生
-                sortStudentsMenu();
-                break;
-            }
-            case 5:{
-                // 显示学生信息
-                displayStudentMenu();
-                break;
-            }
-            case 6:{
-                // 查找
-                printf("请输入需要查找学生的学号\n");
-                char studentID[STUDENT_ID_LENGTH];
+        if (strcmp(choice, "1") == 0) {
+            addStudentAccount();
+        } else if (strcmp(choice, "2") == 0) {
+            addAdminAccount();
+        } else if (strcmp(choice, "3") == 0) {
+            modifyScoreMenu();
+        } else if (strcmp(choice, "4") == 0) {
+            sortStudentsMenu();
+        } else if (strcmp(choice, "5") == 0) {
+            displayStudentMenu();
+        } else if (strcmp(choice, "6") == 0) {
+            char studentID[STUDENT_ID_LENGTH];
+            printf("请输入学生学号: ");
+            scanf("%s", studentID);
+            //判断学号是否合法
+            while (!isStudentIDValid(studentID)) {
+                handleInputError("学号应为8位数字，请重新输入。\n");
                 scanf("%s", studentID);
-                //判断学号是否合法
-                while (!isStudentIDValid(studentID)) {
-                    handleInputError("学号应为8位数字，请重新输入。\n");
-                    scanf("%s", studentID);
-                }
-                StudentInfo *student = findStudentByID(studentID);
-                if (student != NULL) {
-                    displayStudentInfo(student);
-                } else {
-                    printf("未找到学生信息。\n");
-                }
-                break;
             }
-            case 7:{
-                // 保存到文件
-                saveToFile();
-                break;
-            }
-            case 8:{
-                // 从文件加载
-                loadFromFile();
-                break;
-            }
-            case 9:{
-                // 更改密码
-                char newPassword[MAX_PASSWORD_LENGTH];
-                printf("请输入新密码：（不超过15位）");
-                scanf("%s", newPassword);
-                //判断密码长度是否合法
-                while (!isPasswordValid(newPassword)) {
-                    handleInputError("密码长度应为1-15位，请重新输入。\n");
-                    scanf("%s", newPassword);
-                }
-                strcpy(admin->password, newPassword);
-                printf("密码修改成功。\n");
-                break;
-            }
-            case 10:{
-                printf("管理员退出登录。\n");
-                //freeMemory(&studentsList);//释放内存
-                //freeAdminMemory(&adminsList);//释放内存
-                break;
-            }
-            default: {
-                printf("无效的选项，请重新输入。\n");
-            }
-        }
-    } while (choice != 10);
-}
-
-//显示学生菜单
-void displaySelfMenu(StudentInfo *student) {
-    int choice;
-    do {
-        printf("学生菜单：\n");
-        printf("1. 查看成绩\n");
-        printf("2. 查看加分\n");
-        printf("3. 修改密码\n");
-        printf("4. 退出\n");
-        printf("请选择操作：");
-        scanf("%d", &choice);
-        //判断选择是否合法
-        while (choice < 1 || choice > 4) {
-            handleInputError("选项应为1-4之间的数，请重新输入。\n");
-            scanf("%d", &choice);
-        }
-        switch (choice) {
-            case 1:{
-                // 查看成绩
-                displayAcademicScore(student);
-                break;
-            }
-            case 2:{
-                // 查看加分
-                displayQualityScore(student);
-                break;
-            }
-            case 3:{
-                // 修改密码
+            StudentInfo *student = findStudentByID(studentID);
+            displayStudentInfo(student);
+        } else if (strcmp(choice, "7") == 0) {
+            saveToFile();
+        } else if (strcmp(choice, "8") ==0) {
+            loadFromFile();
+        } else if (strcmp(choice, "9") == 0) {
                 char newPassword[MAX_PASSWORD_LENGTH];
                 printf("请输入新密码：");
                 scanf("%s", newPassword);
                 //判断密码长度是否合法
                 while (!isPasswordValid(newPassword)) {
-                    handleInputError("密码长度应为1-15位，请重新输入。\n");
-                    scanf("%s", newPassword);
+                 handleInputError("密码长度应为1-15位，请重新输入。\n");
+                 scanf("%s", newPassword);
                 }
-                strcpy(student->password, newPassword);
+                strcpy(admin->password, newPassword);
                 printf("密码修改成功。\n");
-                break;
-            }
-            case 4:{
-                printf("学生退出登录。\n");
-                //freeMemory(&studentsList);//释放内存
-                //freeAdminMemory(&adminsList);//释放内存
-                break;
-            }
-            default: {
-                printf("无效的选项，请重新输入。\n");
-            }
+        } else if (strcmp(choice, "10") == 0) {
+                printf("管理员退出登录。\n");
         }
-    } while (choice != 4);
+    } while (strcmp(choice, "10") != 0);
+}
+
+//显示学生菜单
+void displaySelfMenu(StudentInfo *student) {
+    char choice[MAX_NAME_LENGTH];
+    do {
+        printf("学生菜单：\n");
+        printf("1. 查看成绩\n");
+        printf("2. 查看素质加分项目\n");
+        printf("3. 修改密码\n");
+        printf("4. 退出\n");
+        printf("请选择操作：");
+        scanf("%s", choice);
+        //判断选择是否合法
+        while (strcmp(choice, "1") != 0 && strcmp(choice, "2") != 0 && strcmp(choice, "3") != 0 && strcmp(choice, "4") != 0) {
+            handleInputError("选项应为1-4之间的数，请重新输入。\n");
+            scanf("%s", choice);
+        }
+        if (strcmp(choice, "1") == 0) {
+            displayAcademicScore(student);//显示学业成绩
+        } else if (strcmp(choice, "2") == 0) {
+            displayQualityScore(student);//显示素质加分
+        } else if (strcmp(choice, "3") == 0) {
+            char newPassword[MAX_PASSWORD_LENGTH];
+            printf("请输入新密码：");
+            scanf("%s", newPassword);
+            //判断密码长度是否合法
+            while (!isPasswordValid(newPassword)) {
+                handleInputError("密码长度应为1-15位，请重新输入。\n");
+                scanf("%s", newPassword);
+            }
+            strcpy(student->password, newPassword);
+            printf("密码修改成功。\n");
+        } else if (strcmp(choice, "4") == 0) {
+            printf("学生退出登录。\n");
+        }
+    } while (strcmp(choice, "4") != 0);
 }
 
 // 释放学生内存
@@ -993,15 +889,15 @@ StudentInfo *createStudent() {
     }
 
     //录入学业成绩
-    int choice1;
+    char choice1[MAX_NAME_LENGTH];
     printf("是否现在录入课程记录？(1. 是 2. 否): ");
-    scanf("%d", &choice1);
+    scanf("%s", choice1);
     //判断选择是否合法
-    while (choice1 != 1 && choice1 != 2) {
+    while (strcmp(choice1, "1") != 0 && strcmp(choice1, "2") != 0) {
         handleInputError("选项应为1或2，请重新输入。\n");
-        scanf("%d", &choice1);
+        scanf("%s", choice1);
     }
-    if(choice1 == 1){
+    if(strcmp(choice1, "1") == 0){
         int numCourses;
         printf("请输入要输入的课程数量：");
         scanf("%d", &numCourses);
@@ -1012,15 +908,16 @@ StudentInfo *createStudent() {
         calculateAcademics(newStudent);
     }
 
-    int choice2;
+    //录入素质加分项目
+    char choice2[MAX_NAME_LENGTH];
     printf("是否现在录入素质加分项目记录？(1. 是 2. 否): ");
-    scanf("%d", &choice2);
+    scanf("%s", choice2);
     //判断选择是否合法
-    while (choice2 != 1 && choice2 != 2) {
+    while (strcmp(choice2, "1") != 0 && strcmp(choice2, "2") != 0) {
         handleInputError("选项应为1或2，请重新输入。\n");
-        scanf("%d", &choice2);
+        scanf("%s", choice2);
     }
-    if(choice2 == 1){
+    if(strcmp(choice2, "1") == 0){
         //录入素质加分项目
         addQualityProject(newStudent);
         calculateQualityGPA(newStudent);
@@ -1214,163 +1111,164 @@ AdminInfo *findAdminByUsername(const char *username) {
 void modifyAcademicScore(StudentInfo *student) {
     // 修改学业成绩
     int choice;
-    printf("请选择修改类型：\n");
-    printf("1. 修改课程名称\n");
-    printf("2. 修改分数\n");
-    printf("3. 修改学分\n");
-    printf("4. 删除课程\n");
-    printf("5. 返回上一级菜单\n");
-    scanf("%d", &choice);
-    //判断选择是否合法
-    while (choice < 1 || choice > 5) {
-        handleInputError("选项应为1-5之间的数，请重新输入。\n");
+    do{
+        printf("请选择修改类型：\n");
+        printf("1. 修改课程名称\n");
+        printf("2. 修改分数\n");
+        printf("3. 修改学分\n");
+        printf("4. 删除课程\n");
+        printf("5. 返回上一级菜单\n");
         scanf("%d", &choice);
-    }
-    switch (choice) {
-        case 1:{
-            // 修改课程名称
-            if (student->academicScores == NULL) {
-                printf("当前没有课程可以修改。\n");
-                break;
-            }
-            AcademicScoreNode *current = student->academicScores;
-            printf("请输入要修改的课程名称（输入q退出）：");
-            char courseName[MAX_NAME_LENGTH];
-            scanf("%s", courseName);
-            if (strcmp(courseName, "q") == 0) {
-                break;
-            }
-            while (current != NULL) {
-                if (strcmp(current->courseName, courseName) == 0) {
-                    printf("找到课程: %s, 当前分数: %.2f\n", current->courseName, current->score);
-                    printf("请输入新的课程名称: ");
-                    scanf("%s", current->courseName);
-                    printf("课程名称修改成功。\n");
+        //判断选择是否合法
+        while (choice < 1 || choice > 5) {
+            handleInputError("选项应为1-5之间的数，请重新输入。\n");
+            scanf("%d", &choice);
+        }
+        switch (choice) {
+            case 1:{
+                // 修改课程名称
+                if (student->academicScores == NULL) {
+                    printf("当前没有课程可以修改。\n");
                     break;
                 }
-                current = current->next;
-            }
-            if (current == NULL) {
-                printf("未找到指定的课程。\n");
-            }
-            break;
-        }
-        case 2:{
-            // 修改分数
-            if (student->academicScores == NULL) {
-                printf("当前没有课程可以修改。\n");
+                AcademicScoreNode *current = student->academicScores;
+                printf("请输入要修改的课程名称（输入q退出）：");
+                char courseName[MAX_NAME_LENGTH];
+                scanf("%s", courseName);
+                if (strcmp(courseName, "q") == 0) {
+                    break;
+                }
+                while (current != NULL) {
+                    if (strcmp(current->courseName, courseName) == 0) {
+                        printf("找到课程: %s, 当前分数: %.2f\n", current->courseName, current->score);
+                        printf("请输入新的课程名称: ");
+                        scanf("%s", current->courseName);
+                        printf("课程名称修改成功。\n");
+                        break;
+                    }
+                    current = current->next;
+                }
+                if (current == NULL) {
+                    printf("未找到指定的课程。\n");
+                }
                 break;
             }
-            AcademicScoreNode *currentScore = student->academicScores;
-            printf("请输入要修改的课程名称（输入q退出）：");
-            char scoreCourseName[MAX_NAME_LENGTH];
-            scanf("%s", scoreCourseName);
-            if (strcmp(scoreCourseName, "q") == 0) {
-                break;
-            }
-            while (currentScore != NULL) {
-                if (strcmp(currentScore->courseName, scoreCourseName) == 0) {
-                    printf("找到课程: %s, 当前分数: %f\n", currentScore->courseName, currentScore->score);
-                    printf("请输入新的分数: ");
-                    scanf("%f", &currentScore->score);
-                    //判断分数是否合法
-                    while (!isScoreValid(currentScore->score)) {
-                        handleInputError("分数应为0-100之间的数，请重新输入。\n");
+            case 2:{
+                // 修改分数
+                if (student->academicScores == NULL) {
+                    printf("当前没有课程可以修改。\n");
+                    break;
+                }
+                AcademicScoreNode *currentScore = student->academicScores;
+                printf("请输入要修改的课程名称（输入q退出）：");
+                char scoreCourseName[MAX_NAME_LENGTH];
+                scanf("%s", scoreCourseName);
+                if (strcmp(scoreCourseName, "q") == 0) {
+                    break;
+                }
+                while (currentScore != NULL) {
+                    if (strcmp(currentScore->courseName, scoreCourseName) == 0) {
+                        printf("找到课程: %s, 当前分数: %f\n", currentScore->courseName, currentScore->score);
+                        printf("请输入新的分数: ");
                         scanf("%f", &currentScore->score);
+                        //判断分数是否合法
+                        while (!isScoreValid(currentScore->score)) {
+                            handleInputError("分数应为0-100之间的数，请重新输入。\n");
+                            scanf("%f", &currentScore->score);
+                        }
+                        currentScore->gpa = calculateSingleGPA(&currentScore->score);//重新计算当前课程绩点
+                        calculateAcademics(student);//重新计算GPA\总学分\加权平均分\总绩点
+                        printf("分数修改成功。\n");
+                        break;
                     }
-                    currentScore->gpa = calculateSingleGPA(&currentScore->score);//重新计算当前课程绩点
-                    calculateAcademics(student);//重新计算GPA\总学分\加权平均分\总绩点
-                    printf("分数修改成功。\n");
+                    currentScore = currentScore->next;
+                }
+                if (currentScore == NULL) {
+                    printf("未找到指定的课程。\n");
+                }
+                break;
+            }
+            case 3:{
+                // 修改学分
+                if (student->academicScores == NULL) {
+                    printf("当前没有课程可以修改。\n");
                     break;
                 }
-                currentScore = currentScore->next;
-            }
-            if (currentScore == NULL) {
-                printf("未找到指定的课程。\n");
-            }
-            break;
-        }
-        case 3:{
-            // 修改学分
-            if (student->academicScores == NULL) {
-                printf("当前没有课程可以修改。\n");
-                break;
-            }
-            AcademicScoreNode *currentCredit = student->academicScores;
-            printf("请输入要修改的课程名称（输入q退出）：");
-            char creditCourseName[MAX_NAME_LENGTH];
-            scanf("%s", creditCourseName);
-            if (strcmp(creditCourseName, "q") == 0) {
-                break;
-            }
-            while (currentCredit != NULL) {
-                if (strcmp(currentCredit->courseName, creditCourseName) == 0) {
-                    printf("找到课程: %s, 当前学分: %.2f\n", currentCredit->courseName, currentCredit->credit);
-                    printf("请输入新的学分: ");
-                    scanf("%2f", &currentCredit->credit);
-                    //判断学分是否合法
-                    while (!isCreditValid(currentCredit->credit)) {
-                        handleInputError("学分应为小于8数，请重新输入。\n");
+                AcademicScoreNode *currentCredit = student->academicScores;
+                printf("请输入要修改的课程名称（输入q退出）：");
+                char creditCourseName[MAX_NAME_LENGTH];
+                scanf("%s", creditCourseName);
+                if (strcmp(creditCourseName, "q") == 0) {
+                    break;
+                }
+                while (currentCredit != NULL) {
+                    if (strcmp(currentCredit->courseName, creditCourseName) == 0) {
+                        printf("找到课程: %s, 当前学分: %.2f\n", currentCredit->courseName, currentCredit->credit);
+                        printf("请输入新的学分: ");
                         scanf("%2f", &currentCredit->credit);
+                        //判断学分是否合法
+                        while (!isCreditValid(currentCredit->credit)) {
+                            handleInputError("学分应为小于8数，请重新输入。\n");
+                            scanf("%2f", &currentCredit->credit);
+                        }
+                        calculateAcademics(student);  //重新计算GPA\总学分\加权平均分\总绩点
+                        printf("学分修改成功。\n");
+                        break;
                     }
-                    calculateAcademics(student);  //重新计算GPA\总学分\加权平均分\总绩点
-                    printf("学分修改成功。\n");
+                    currentCredit = currentCredit->next;
+                }
+                if (currentCredit == NULL) {
+                    printf("未找到指定的课程。\n");
+                }
+                break;
+            }
+            case 4:{
+                // 删除课程
+                if (student->academicScores == NULL) {
+                    printf("当前没有课程可以删除。\n");
                     break;
                 }
-                currentCredit = currentCredit->next;
-            }
-            if (currentCredit == NULL) {
-                printf("未找到指定的课程。\n");
-            }
-            break;
-        }
-        case 4:{
-            // 删除课程
-            if (student->academicScores == NULL) {
-                printf("当前没有课程可以删除。\n");
-                break;
-            }
-            AcademicScoreNode *currentDelete = student->academicScores;
-            AcademicScoreNode *prev = NULL;
-            printf("请输入要删除的课程名称（输入q退出）：");
-            char deleteCourseName[MAX_NAME_LENGTH];
-            scanf("%s", deleteCourseName);
-            if (strcmp(deleteCourseName, "q") == 0) {
-                break;
-            }
-            while (currentDelete != NULL) {
-                if (strcmp(currentDelete->courseName, deleteCourseName) == 0) {
-                    if (prev == NULL) {
-                        // 要删除的是头节点
-                        student->academicScores = currentDelete->next;
-                    } else {
-                        // 要删除的是中间或尾节点
-                        prev->next = currentDelete->next;
+                AcademicScoreNode *currentDelete = student->academicScores;
+                AcademicScoreNode *prev = NULL;
+                printf("请输入要删除的课程名称（输入q退出）：");
+                char deleteCourseName[MAX_NAME_LENGTH];
+                scanf("%s", deleteCourseName);
+                if (strcmp(deleteCourseName, "q") == 0) {
+                    break;
+                }
+                while (currentDelete != NULL) {
+                    if (strcmp(currentDelete->courseName, deleteCourseName) == 0) {
+                        if (prev == NULL) {
+                            // 要删除的是头节点
+                            student->academicScores = currentDelete->next;
+                        } else {
+                            // 要删除的是中间或尾节点
+                            prev->next = currentDelete->next;
+                        }
+                        AcademicScoreNode *temp = currentDelete;
+                        currentDelete = currentDelete->next;
+                        free(temp); // 释放被删除节点的内存
+                        calculateAcademics(student);  //重新计算GPA\总学分\加权平均分\总绩点
+                        printf("课程删除成功。\n");
+                        break;
                     }
-                    AcademicScoreNode *temp = currentDelete;
+                    prev = currentDelete;
                     currentDelete = currentDelete->next;
-                    free(temp); // 释放被删除节点的内存
-                    calculateAcademics(student);  //重新计算GPA\总学分\加权平均分\总绩点
-                    printf("课程删除成功。\n");
-                    break;
                 }
-                prev = currentDelete;
-                currentDelete = currentDelete->next;
+                if (currentDelete == NULL) {
+                    printf("未找到指定的课程。\n");
+                }
+                break;
             }
-            if (currentDelete == NULL) {
-                printf("未找到指定的课程。\n");
+            case 5:{
+                printf("返回上一级菜单。\n");
+                return;
             }
-            break;
+            default: {
+                printf("无效的选项。\n");
+            }
         }
-        case 5:{
-            printf("返回上一级菜单。\n");
-            // 返回上一级菜单
-            break;
-        }
-        default: {
-            printf("无效的选项。\n");
-        }
-    }
+    }while (choice != 5);
 }
 
 // 编辑学生素质加分
@@ -1380,63 +1278,45 @@ void modifyQualityScore(StudentInfo *student) {
         handleInputError("学生信息不能为空。\n");
         return;
     }
-
-    int choice;
-    printf("请选择修改类型：\n");
-    printf("1. 修改大学生创新创业项目\n");
-    printf("2. 删除大学生创新创业项目\n");
-    printf("3. 修改学术论文\n");
-    printf("4. 删除学术论文\n");
-    printf("5. 修改计算机类学科竞赛\n");
-    printf("6. 删除计算机类学科竞赛\n");
-    printf("7. 返回上一级菜单\n");
-    scanf("%d", &choice);
-    // 判断选择是否合法
-    while (choice < 1 || choice > 7) {
-        handleInputError("选项应为1-7之间的数，请重新输入。\n");
-        scanf("%d", &choice);
-    }
-    switch (choice) {
-        case 1:{
+    char choice[MAX_NAME_LENGTH];
+    do{
+        printf("请选择修改类型：\n");
+        printf("1. 修改大学生创新创业项目\n");
+        printf("2. 删除大学生创新创业项目\n");
+        printf("3. 修改学术论文\n");
+        printf("4. 删除学术论文\n");
+        printf("5. 修改计算机类学科竞赛\n");
+        printf("6. 删除计算机类学科竞赛\n");
+        printf("7. 返回上一级菜单\n");
+        scanf("%s", choice);
+        // 判断选择是否合法
+        while (strcmp(choice, "1") != 0 && strcmp(choice, "2") != 0 && strcmp(choice, "3") != 0 && strcmp(choice, "4") != 0 && strcmp(choice, "5") != 0 && strcmp(choice, "6") != 0 && strcmp(choice, "7") != 0) {
+            handleInputError("选项应为1-7之间的数，请重新输入。\n");
+            scanf("%s", choice);
+        }
+        if (strcmp(choice, "1") == 0) {
             // 修改大学生创新创业项目
             modifyInnovationProject(student);
-            break;
-        }
-        case 2:{
+        } else if (strcmp(choice, "2") == 0) {
             // 删除大学生创新创业项目
             deleteInnovationProject(student);
-            break;
-        }
-        case 3:{
+        } else if (strcmp(choice, "3") == 0) {
             // 修改学术论文
             modifyAcademicPaper(student);
-            break;
-        }
-        case 4:{
+        } else if (strcmp(choice, "4") == 0) {
             // 删除学术论文
             deleteAcademicPaper(student);
-            break;
-        }
-        case 5:{
+        } else if (strcmp(choice, "5") == 0) {
             // 修改计算机类学科竞赛
             modifyCompetition(student);
-            break;
-        }
-        case 6:{
+        } else if (strcmp(choice, "6") == 0) {
             // 删除计算机类学科竞赛
             deleteCompetition(student);
-            break;
-        }
-        case 7:{
-            printf("返回上一级菜单。\n");
+        } else if (strcmp(choice, "7") == 0) {
             // 返回上一级菜单
-            break;
+            printf("返回上一级菜单。\n");
         }
-        default: {
-            printf("无效的选项。\n");
-        }
-
-    }
+    }while (strcmp(choice, "7") != 0);
 }
 
 // 显示指定学生的全部学业成绩
@@ -2150,82 +2030,84 @@ void modifyInnovationProject(StudentInfo *student) {
         printf("当前没有项目可以修改。\n");
     }
     int choice;
-    printf("请选择修改类型：\n");
-    printf("1. 修改项目名称\n");
-    printf("2. 修改项目级别\n");
-    printf("3. 修改是否结题\n");
-    printf("4. 修改是否为项目负责人\n");
-    printf("5. 返回上一级菜单\n");
-    scanf("%d", &choice);
-    // 判断用户选择是否合法
-    while (choice < 1 || choice > 5) {
-        handleInputError("选项应在1-5之间，请重新输入：");
+    do{
+        printf("请选择修改类型：\n");
+        printf("1. 修改项目名称\n");
+        printf("2. 修改项目级别\n");
+        printf("3. 修改是否结题\n");
+        printf("4. 修改是否为项目负责人\n");
+        printf("5. 返回上一级菜单\n");
         scanf("%d", &choice);
-        return;
-    }
-    switch (choice) {
-        case 1: {
-            // 修改项目名称
-            InnovationProject *current = student->innovationProjects;
-            printf("请输入要修改的项目名称（输入q退出）：");
-            char projectName[MAX_NAME_LENGTH];
-            scanf("%s", projectName);
-            if (strcmp(projectName, "q") == 0) {
-                break;
-            }
-            strcpy(current->projectName, projectName);
-            printf("项目名称修改成功。\n");
-            break;
+        // 判断用户选择是否合法
+        while (choice < 1 || choice > 5) {
+            handleInputError("选项应在1-5之间，请重新输入：");
+            scanf("%d", &choice);
+            return;
         }
-        case 2: {
-            // 修改项目级别
-            InnovationProject *current = student->innovationProjects;
-            printf("请输入要修改的级别（输入q退出）：");
-            char projectLevel[MAX_NAME_LENGTH];
-            scanf("%s", projectLevel);
-            if (strcmp(projectLevel, "q") == 0) {
+        switch (choice) {
+            case 1: {
+                // 修改项目名称
+                InnovationProject *current = student->innovationProjects;
+                printf("请输入要修改的项目名称（输入q退出）：");
+                char projectName[MAX_NAME_LENGTH];
+                scanf("%s", projectName);
+                if (strcmp(projectName, "q") == 0) {
+                    break;
+                }
+                strcpy(current->projectName, projectName);
+                printf("项目名称修改成功。\n");
                 break;
             }
-            //判断输入是否合法
-            while(!isProjectLevelValid(projectLevel)){
-                handleInputError("级别应为国家级，省级，校级，请重新输入：");
+            case 2: {
+                // 修改项目级别
+                InnovationProject *current = student->innovationProjects;
+                printf("请输入要修改的级别（输入q退出）：");
+                char projectLevel[MAX_NAME_LENGTH];
                 scanf("%s", projectLevel);
+                if (strcmp(projectLevel, "q") == 0) {
+                    break;
+                }
+                //判断输入是否合法
+                while(!isProjectLevelValid(projectLevel)){
+                    handleInputError("级别应为国家级，省级，校级，请重新输入：");
+                    scanf("%s", projectLevel);
+                }
+                strcpy(current->projectLevel, projectLevel);
+                printf("项目级别修改成功。\n");
+                break;
             }
-            strcpy(current->projectLevel, projectLevel);
-            printf("项目级别修改成功。\n");
-            break;
-        }
-        case 3: {
-            // 修改是否结题
-            InnovationProject *current = student->innovationProjects;
-            printf("请输入是否结题（1. 是 2. 否）：");
-            int isFinished;
-            scanf("%d", &isFinished);
-            //判断输入是否合法
-            while(isFinished != 1 && isFinished != 2){
-                handleInputError("输入应为1或2，请重新输入：");
+            case 3: {
+                // 修改是否结题
+                InnovationProject *current = student->innovationProjects;
+                printf("请输入是否结题（1. 是 2. 否）：");
+                int isFinished;
                 scanf("%d", &isFinished);
+                //判断输入是否合法
+                while(isFinished != 1 && isFinished != 2){
+                    handleInputError("输入应为1或2，请重新输入：");
+                    scanf("%d", &isFinished);
+                }
+                current->isFinished = isFinished;
+                printf("是否结题修改成功。\n");
+                break;
             }
-            current->isFinished = isFinished;
-            printf("是否结题修改成功。\n");
-            break;
-        }
-        case 4: {
-            // 修改是否为项目负责人
-            InnovationProject *current = student->innovationProjects;
-            printf("请输入是否为项目负责人（0.不是负责人 1. 第一负责人 2. 第二负责人）：");
-            int isLeaderOrSecondLeader;
-            scanf("%d", &isLeaderOrSecondLeader);
-            //判断输入是否合法
-            while(isLeaderOrSecondLeader != 0 && isLeaderOrSecondLeader != 1 && isLeaderOrSecondLeader != 2){
-                handleInputError("输入应为0，1或2，请重新输入：");
+            case 4: {
+                // 修改是否为项目负责人
+                InnovationProject *current = student->innovationProjects;
+                printf("请输入是否为项目负责人（0.不是负责人 1. 第一负责人 2. 第二负责人）：");
+                int isLeaderOrSecondLeader;
                 scanf("%d", &isLeaderOrSecondLeader);
+                //判断输入是否合法
+                while(isLeaderOrSecondLeader != 0 && isLeaderOrSecondLeader != 1 && isLeaderOrSecondLeader != 2){
+                    handleInputError("输入应为0，1或2，请重新输入：");
+                    scanf("%d", &isLeaderOrSecondLeader);
+                }
+                current->isLeaderOrSecondLeader = isLeaderOrSecondLeader;
+                printf("是否为项目负责人修改成功。\n");
+                break;
             }
-            current->isLeaderOrSecondLeader = isLeaderOrSecondLeader;
-            printf("是否为项目负责人修改成功。\n");
-            break;
         }
-    }
+    }while(choice != 5);
 }
 
 //修改学术论文
@@ -2239,112 +2121,114 @@ void modifyAcademicPaper(StudentInfo *student) {
         printf("当前没有学术论文可以修改。\n");
     }
     int choice;
-    printf("请选择修改类型：\n");
-    printf("1. 修改论文标题\n");
-    printf("2. 修改期刊类名\n");
-    printf("3. 修改是否为第一作者\n");
-    printf("4. 修改期刊级别\n");
-    printf("5. 返回上一级菜单\n");
-    scanf("%d", &choice);
-    // 判断用户选择是否合法
-    while (choice < 1 || choice > 5) {
-        handleInputError("选项应在1-5之间，请重新输入：");
+    do{
+        printf("请选择修改类型：\n");
+        printf("1. 修改论文标题\n");
+        printf("2. 修改期刊类名\n");
+        printf("3. 修改是否为第一作者\n");
+        printf("4. 修改期刊级别\n");
+        printf("5. 返回上一级菜单\n");
         scanf("%d", &choice);
-        return;
-    }
-    switch (choice) {
-        case 1: {
-            // 修改论文标题
-            AcademicPaper *current = student->academicPapers;
-            printf("请输入要修改的论文标题（输入q退出）：");
-            char title[MAX_NAME_LENGTH];
-            scanf("%s", title);
-            if (strcmp(title, "q") == 0) {
-                break;
-            }
-            while (current != NULL) {
-                if (strcmp(current->title, title) == 0) {
-                    printf("找到论文: %s, 当前期刊名称: %s\n", current->title, current->journalName);
-                    printf("请输入新的论文标题: ");
-                    scanf("%s", current->title);
-                    printf("论文标题修改成功。\n");
+        // 判断用户选择是否合法
+        while (choice < 1 || choice > 5) {
+            handleInputError("选项应在1-5之间，请重新输入：");
+            scanf("%d", &choice);
+            return;
+        }
+        switch (choice) {
+            case 1: {
+                // 修改论文标题
+                AcademicPaper *current = student->academicPapers;
+                printf("请输入要修改的论文标题（输入q退出）：");
+                char title[MAX_NAME_LENGTH];
+                scanf("%s", title);
+                if (strcmp(title, "q") == 0) {
                     break;
                 }
-                current = current->next;
-            }
-            break;
-        }
-        case 2: {
-            // 修改期刊名称
-            AcademicPaper *current = student->academicPapers;
-            printf("请输入要修改的论文标题（输入q退出）：");
-            char title[MAX_NAME_LENGTH];
-            scanf("%s", title);
-            if (strcmp(title, "q") == 0) {
-                break;
-            }
-            while (current != NULL) {
-                if (strcmp(current->title, title) == 0) {
-                    printf("找到论文: %s, 当前期刊名称: %s\n", current->title, current->journalName);
-                    printf("请输入新的期刊名称: ");
-                    scanf("%s", current->journalName);
-                    printf("期刊名称修改成功。\n");
-                    break;
-                }
-                current = current->next;
-            }
-            break;
-        }
-        case 3: {
-            // 修改是否为第一作者
-            AcademicPaper *current = student->academicPapers;
-            printf("请输入要修改的论文标题（输入q退出）：");
-            char title[MAX_NAME_LENGTH];
-            scanf("%s", title);
-            if (strcmp(title, "q") == 0) {
-                break;
-            }
-            while (current != NULL) {
-                if (strcmp(current->title, title) == 0) {
-                    printf("找到论文: %s, 当前是否为第一作者: %d\n", current->title, current->isFirstAuthor);
-                    printf("请输入是否为第一作者（0. 否 1. 是）: ");
-                    int isFirstAuthor;
-                    scanf("%d", &isFirstAuthor);
-                    //判断输入是否合法
-                    while(isFirstAuthor != 0 && isFirstAuthor != 1){
-                        handleInputError("输入应为0或1，请重新输入：");
-                        scanf("%d", &isFirstAuthor);
+                while (current != NULL) {
+                    if (strcmp(current->title, title) == 0) {
+                        printf("找到论文: %s, 当前期刊名称: %s\n", current->title, current->journalName);
+                        printf("请输入新的论文标题: ");
+                        scanf("%s", current->title);
+                        printf("论文标题修改成功。\n");
+                        break;
                     }
-                    current->isFirstAuthor = isFirstAuthor;
-                    printf("是否为第一作者修改成功。\n");
-                    break;
+                    current = current->next;
                 }
-                current = current->next;
-            }
-            break;
-        }
-        case 4: {
-            // 修改期刊级别
-            AcademicPaper *current = student->academicPapers;
-            printf("请输入要修改的论文标题（输入q退出）：");
-            char title[MAX_NAME_LENGTH];
-            scanf("%s", title);
-            if (strcmp(title, "q") == 0) {
                 break;
             }
-            while (current != NULL) {
-                if (strcmp(current->title, title) == 0) {
-                    printf("找到论文: %s, 当前期刊级别: %d\n", current->title, current->journalLevel);
-                    current->journalLevel = 0;
-                    calculateJournalLevel(current);
-                    printf("期刊级别修改成功。\n");
+            case 2: {
+                // 修改期刊名称
+                AcademicPaper *current = student->academicPapers;
+                printf("请输入要修改的论文标题（输入q退出）：");
+                char title[MAX_NAME_LENGTH];
+                scanf("%s", title);
+                if (strcmp(title, "q") == 0) {
                     break;
                 }
-                current = current->next;
+                while (current != NULL) {
+                    if (strcmp(current->title, title) == 0) {
+                        printf("找到论文: %s, 当前期刊名称: %s\n", current->title, current->journalName);
+                        printf("请输入新的期刊名称: ");
+                        scanf("%s", current->journalName);
+                        printf("期刊名称修改成功。\n");
+                        break;
+                    }
+                    current = current->next;
+                }
+                break;
             }
-            break;
+            case 3: {
+                // 修改是否为第一作者
+                AcademicPaper *current = student->academicPapers;
+                printf("请输入要修改的论文标题（输入q退出）：");
+                char title[MAX_NAME_LENGTH];
+                scanf("%s", title);
+                if (strcmp(title, "q") == 0) {
+                    break;
+                }
+                while (current != NULL) {
+                    if (strcmp(current->title, title) == 0) {
+                        printf("找到论文: %s, 当前是否为第一作者: %d\n", current->title, current->isFirstAuthor);
+                        printf("请输入是否为第一作者（0. 否 1. 是）: ");
+                        int isFirstAuthor;
+                        scanf("%d", &isFirstAuthor);
+                        //判断输入是否合法
+                        while(isFirstAuthor != 0 && isFirstAuthor != 1){
+                            handleInputError("输入应为0或1，请重新输入：");
+                            scanf("%d", &isFirstAuthor);
+                        }
+                        current->isFirstAuthor = isFirstAuthor;
+                        printf("是否为第一作者修改成功。\n");
+                        break;
+                    }
+                    current = current->next;
+                }
+                break;
+            }
+            case 4: {
+                // 修改期刊级别
+                AcademicPaper *current = student->academicPapers;
+                printf("请输入要修改的论文标题（输入q退出）：");
+                char title[MAX_NAME_LENGTH];
+                scanf("%s", title);
+                if (strcmp(title, "q") == 0) {
+                    break;
+                }
+                while (current != NULL) {
+                    if (strcmp(current->title, title) == 0) {
+                        printf("找到论文: %s, 当前期刊级别: %d\n", current->title, current->journalLevel);
+                        current->journalLevel = 0;
+                        calculateJournalLevel(current);
+                        printf("期刊级别修改成功。\n");
+                        break;
+                    }
+                    current = current->next;
+                }
+                break;
+            }
         }
-    }
+    }while(choice != 5);
 }
 
 //修改计算机类学科竞赛
@@ -2358,160 +2242,162 @@ void modifyCompetition(StudentInfo *student) {
         printf("当前没有竞赛可以修改。\n");
     }
     int choice;
-    printf("请选择修改类型：\n");
-    printf("1. 修改竞赛名称\n");
-    printf("2. 修改参赛队伍人数\n");
-    printf("3. 修改竞赛级别\n");
-    printf("4. 修改获奖等级\n");
-    printf("5. 修改竞赛类别\n");
-    printf("6. 返回上一级菜单\n");
-    scanf("%d", &choice);
-    // 判断用户选择是否合法
-    while (choice < 1 || choice > 6) {
-        handleInputError("输入错误，请重新输入。\n");
+    do{
+        printf("请选择修改类型：\n");
+        printf("1. 修改竞赛名称\n");
+        printf("2. 修改参赛队伍人数\n");
+        printf("3. 修改竞赛级别\n");
+        printf("4. 修改获奖等级\n");
+        printf("5. 修改竞赛类别\n");
+        printf("6. 返回上一级菜单\n");
         scanf("%d", &choice);
-    }
-    switch (choice) {
-        case 1: {
-            // 修改竞赛名称
-            Competition *current = student->competitions;
-            printf("请输入要修改的竞赛名称（输入q退出）：");
-            char competitionName[MAX_NAME_LENGTH];
-            scanf("%s", competitionName);
-            if (strcmp(competitionName, "q") == 0) {
-                break;
-            }
-            while (current != NULL) {
-                if (strcmp(current->competitionName, competitionName) == 0) {
-                    printf("找到竞赛: %s, 当前参赛队伍人数: %d\n", current->competitionName, current->teamSize);
-                    printf("请输入新的竞赛名称: ");
-                    scanf("%s", current->competitionName);
-                    printf("竞赛名称修改成功。\n");
+        // 判断用户选择是否合法
+        while (choice < 1 || choice > 6) {
+            handleInputError("输入错误，请重新输入。\n");
+            scanf("%d", &choice);
+        }
+        switch (choice) {
+            case 1: {
+                // 修改竞赛名称
+                Competition *current = student->competitions;
+                printf("请输入要修改的竞赛名称（输入q退出）：");
+                char competitionName[MAX_NAME_LENGTH];
+                scanf("%s", competitionName);
+                if (strcmp(competitionName, "q") == 0) {
                     break;
                 }
-                current = current->next;
-            }
-            if (current == NULL) {
-                printf("未找到指定的竞赛。\n");
-            }
-            break;
-        }
-        case 2: {
-            // 修改参赛队伍人数
-            Competition *current = student->competitions;
-            printf("请输入要修改的竞赛名称（输入q退出）：");
-            char competitionName[MAX_NAME_LENGTH];
-            scanf("%s", competitionName);
-            if (strcmp(competitionName, "q") == 0) {
+                while (current != NULL) {
+                    if (strcmp(current->competitionName, competitionName) == 0) {
+                        printf("找到竞赛: %s, 当前参赛队伍人数: %d\n", current->competitionName, current->teamSize);
+                        printf("请输入新的竞赛名称: ");
+                        scanf("%s", current->competitionName);
+                        printf("竞赛名称修改成功。\n");
+                        break;
+                    }
+                    current = current->next;
+                }
+                if (current == NULL) {
+                    printf("未找到指定的竞赛。\n");
+                }
                 break;
             }
-            while (current != NULL) {
-                if (strcmp(current->competitionName, competitionName) == 0) {
-                    printf("找到竞赛: %s, 当前参赛队伍人数: %d\n", current->competitionName, current->teamSize);
-                    printf("请输入新的参赛队伍人数: ");
-                    scanf("%d", &current->teamSize);
-                    printf("参赛队伍人数修改成功。\n");
+            case 2: {
+                // 修改参赛队伍人数
+                Competition *current = student->competitions;
+                printf("请输入要修改的竞赛名称（输入q退出）：");
+                char competitionName[MAX_NAME_LENGTH];
+                scanf("%s", competitionName);
+                if (strcmp(competitionName, "q") == 0) {
                     break;
                 }
-                current = current->next;
-            }
-            if (current == NULL) {
-                printf("未找到指定的竞赛。\n");
-            }
-            break;
-        }
-        case 3: {
-            // 修改竞赛级别
-            Competition *current = student->competitions;
-            printf("请输入要修改的竞赛名称（输入q退出）：");
-            char competitionName[MAX_NAME_LENGTH];
-            scanf("%s", competitionName);
-            if (strcmp(competitionName, "q") == 0) {
+                while (current != NULL) {
+                    if (strcmp(current->competitionName, competitionName) == 0) {
+                        printf("找到竞赛: %s, 当前参赛队伍人数: %d\n", current->competitionName, current->teamSize);
+                        printf("请输入新的参赛队伍人数: ");
+                        scanf("%d", &current->teamSize);
+                        printf("参赛队伍人数修改成功。\n");
+                        break;
+                    }
+                    current = current->next;
+                }
+                if (current == NULL) {
+                    printf("未找到指定的竞赛。\n");
+                }
                 break;
             }
-            while (current != NULL) {
-                if (strcmp(current->competitionName, competitionName) == 0) {
-                    printf("找到竞赛: %s, 当前竞赛级别: %s\n", current->competitionName, current->competitionLevel);
-                    printf("请输入新的竞赛级别: ");
-                    scanf("%s", current->competitionLevel);
-                    //判断输入是否合法
-                    while(!isCompetitionLevelValid(current->competitionLevel)){
-                        handleInputError("级别应为国家级，省级，校级，请重新输入：");
+            case 3: {
+                // 修改竞赛级别
+                Competition *current = student->competitions;
+                printf("请输入要修改的竞赛名称（输入q退出）：");
+                char competitionName[MAX_NAME_LENGTH];
+                scanf("%s", competitionName);
+                if (strcmp(competitionName, "q") == 0) {
+                    break;
+                }
+                while (current != NULL) {
+                    if (strcmp(current->competitionName, competitionName) == 0) {
+                        printf("找到竞赛: %s, 当前竞赛级别: %s\n", current->competitionName, current->competitionLevel);
+                        printf("请输入新的竞赛级别: ");
                         scanf("%s", current->competitionLevel);
+                        //判断输入是否合法
+                        while(!isCompetitionLevelValid(current->competitionLevel)){
+                            handleInputError("级别应为国家级，省级，校级，请重新输入：");
+                            scanf("%s", current->competitionLevel);
+                        }
+                        printf("竞赛级别修改成功。\n");
+                        break;
                     }
-                    printf("竞赛级别修改成功。\n");
-                    break;
+                    current = current->next;
                 }
-                current = current->next;
-            }
-            if (current == NULL) {
-                printf("未找到指定的竞赛。\n");
-            }
-            break;
-        }
-        case 4: {
-            // 修改获奖等级
-            Competition *current = student->competitions;
-            printf("请输入要修改的竞赛名称（输入q退出）：");
-            char competitionName[MAX_NAME_LENGTH];
-            scanf("%s", competitionName);
-            if (strcmp(competitionName, "q") == 0) {
+                if (current == NULL) {
+                    printf("未找到指定的竞赛。\n");
+                }
                 break;
             }
-            while (current != NULL) {
-                if (strcmp(current->competitionName, competitionName) == 0) {
-                    printf("找到竞赛: %s, 当前获奖等级: %d\n", current->competitionName, current->rank);
-                    printf("请输入新的获奖等级: (1, 2, 3)");
-                    int rank;
-                    scanf("%d", &rank);
-                    //判断输入是否合法
-                    while(!isRankValid(rank)){
-                        handleInputError("等级应为1，2，3，请重新输入：");
+            case 4: {
+                // 修改获奖等级
+                Competition *current = student->competitions;
+                printf("请输入要修改的竞赛名称（输入q退出）：");
+                char competitionName[MAX_NAME_LENGTH];
+                scanf("%s", competitionName);
+                if (strcmp(competitionName, "q") == 0) {
+                    break;
+                }
+                while (current != NULL) {
+                    if (strcmp(current->competitionName, competitionName) == 0) {
+                        printf("找到竞赛: %s, 当前获奖等级: %d\n", current->competitionName, current->rank);
+                        printf("请输入新的获奖等级: (1, 2, 3)");
+                        int rank;
                         scanf("%d", &rank);
+                        //判断输入是否合法
+                        while(!isRankValid(rank)){
+                            handleInputError("等级应为1，2，3，请重新输入：");
+                            scanf("%d", &rank);
+                        }
+                        current->rank = rank;
+                        printf("获奖等级修改成功。\n");
+                        break;
                     }
-                    current->rank = rank;
-                    printf("获奖等级修改成功。\n");
-                    break;
+                    current = current->next;
                 }
-                current = current->next;
-            }
-            if (current == NULL) {
-                printf("未找到指定的竞赛。\n");
-            }
-            break;
-        }
-        case 5: {
-            // 修改竞赛类别
-            Competition *current = student->competitions;
-            printf("请输入要修改的竞赛名称（输入q退出）：");
-            char competitionName[MAX_NAME_LENGTH];
-            scanf("%s", competitionName);
-            if (strcmp(competitionName, "q") == 0) {
+                if (current == NULL) {
+                    printf("未找到指定的竞赛。\n");
+                }
                 break;
             }
-            while (current != NULL) {
-                if (strcmp(current->competitionName, competitionName) == 0) {
-                    printf("找到竞赛: %s, 当前竞赛类别: %c\n", current->competitionName, current->competitionType);
-                    printf("请输入新的竞赛类别: (A, B, C)");
-                    char competitionType;
-                    scanf("%c", &competitionType);
-                    //判断输入是否合法
-                    while(!isCompetitionTypeValid(competitionType)){
-                        handleInputError("类别应为A，B，C，请重新输入：");
-                        scanf("%c", &competitionType);
-                    }
-                    current->competitionType = competitionType;
-                    printf("竞赛类别修改成功。\n");
+            case 5: {
+                // 修改竞赛类别
+                Competition *current = student->competitions;
+                printf("请输入要修改的竞赛名称（输入q退出）：");
+                char competitionName[MAX_NAME_LENGTH];
+                scanf("%s", competitionName);
+                if (strcmp(competitionName, "q") == 0) {
                     break;
                 }
-                current = current->next;
+                while (current != NULL) {
+                    if (strcmp(current->competitionName, competitionName) == 0) {
+                        printf("找到竞赛: %s, 当前竞赛类别: %c\n", current->competitionName, current->competitionType);
+                        printf("请输入新的竞赛类别: (A, B, C)");
+                        char competitionType;
+                        scanf("%c", &competitionType);
+                        //判断输入是否合法
+                        while(!isCompetitionTypeValid(competitionType)){
+                            handleInputError("类别应为A，B，C，请重新输入：");
+                            scanf("%c", &competitionType);
+                        }
+                        current->competitionType = competitionType;
+                        printf("竞赛类别修改成功。\n");
+                        break;
+                    }
+                    current = current->next;
+                }
+                if (current == NULL) {
+                    printf("未找到指定的竞赛。\n");
+                }
+                break;
             }
-            if (current == NULL) {
-                printf("未找到指定的竞赛。\n");
-            }
-            break;
         }
-    }
+    } while (choice != 6);
 }
 
 //删除大学生创新创业项目
@@ -2668,32 +2554,29 @@ void displayByClass(StudentInfo *head) {
 //显示学生菜单
 void displayStudentMenu(){
     // 显示学生菜单
-    printf("1. 显示全部学生信息\n");
-    printf("2. 显示一个年级的学生信息\n");
-    printf("3. 显示一个班级的学生信息\n");
-    printf("5. 返回上一级菜单\n");
-    int choice;
-    scanf("%d", &choice);
-    //判断用户选择并执行相应操作
-    while (choice < 1 || choice > 5) {
-        handleInputError("选项应在1-5之间，请重新输入：");
-        scanf("%d", &choice);
-    }
-    switch (choice) {
-        case 1:
+    char choice[MAX_NAME_LENGTH];
+    do{
+        printf("1. 显示全部学生信息\n");
+        printf("2. 显示一个年级的学生信息\n");
+        printf("3. 显示一个班级的学生信息\n");
+        printf("4. 返回上一级菜单\n");
+
+        scanf("%s", choice);
+        //判断用户选择并执行相应操作
+        while (strcmp(choice, "1") != 0 && strcmp(choice, "2") != 0 && strcmp(choice, "3") != 0 && strcmp(choice, "4") != 0) {
+            handleInputError("选项应在1-4之间，请重新输入：");
+            scanf("%s", choice);
+        }
+        if (strcmp(choice, "1") == 0) {
             displayAllStudents(studentsList);
-            break;
-        case 2:
+        } else if (strcmp(choice, "2") == 0) {
             displayByGrade(studentsList);
-            break;
-        case 3:
+        } else if (strcmp(choice, "3") == 0) {
             displayByClass(studentsList);
-            break;
-        case 5:
+        } else if (strcmp(choice, "4") == 0) {
             return;
-        default:
-            handleInputError("无效的选项");
-    }
+        }
+    }while(strcmp(choice, "4") != 0);
 }
 
 //按年级显示学生信息
@@ -2732,15 +2615,10 @@ void sortByGrade(StudentInfo **head) {
         handleInputError("年级必须在1-4之间,请重新输入\n");
         scanf("%d", &grade);
     }
-    int choice;
-    printf("请选择排序方式：\n");
-    printf("1. 按学号排序\n");
-    printf("2. 按学业GPA排序\n");
-    printf("3. 按加权平均分排序\n");
-    printf("4. 按照总绩点排序\n");
-    printf("5. 返回\n");
-    StudentInfo *tempList = NULL;
+    char choice[MAX_NAME_LENGTH];
+
     // 创建一个临时链表用于存放按年级筛选的学生
+    StudentInfo *tempList = NULL;
     StudentInfo *current = *head;
     int length = 0;
     while (current != NULL) {
@@ -2758,31 +2636,35 @@ void sortByGrade(StudentInfo **head) {
         }
         current = current->next;
     }
-    scanf("%d", &choice);
-    //判断输入是否在范围内
-    while (choice < 1 || choice > 5) {
-        handleInputError("输入应是1-5的数字，请重新输入\n");
-        scanf("%d", &choice);
-    }
-    switch (choice) {
-        case 1:
+    do{
+        printf("请选择排序方式：\n");
+        printf("1. 按学号排序\n");
+        printf("2. 按学业GPA排序\n");
+        printf("3. 按加权平均分排序\n");
+        printf("4. 按照总绩点排序\n");
+        printf("5. 返回\n");
+
+
+        scanf("%s", choice);
+        //判断输入是否在范围内
+        while (strcmp(choice, "1") != 0 && strcmp(choice, "2") != 0 && strcmp(choice, "3") != 0 && strcmp(choice, "4") != 0 && strcmp(choice, "5") != 0) {
+            handleInputError("选项应在1-5之间，请重新输入：");
+            scanf("%s", choice);
+        }
+        if(strcmp(choice, "1") == 0){
             sortList(&tempList, compareByStudentID,length);
-            break;
-        case 2:
+        }else if(strcmp(choice, "2") == 0){
             sortList(&tempList, compareByGPA,length);
-            break;
-        case 3:
+        }else if(strcmp(choice, "3") == 0){
             sortList(&tempList, compareByAverageScore,length);
-            break;
-        case 4:
+        }else if(strcmp(choice, "4") == 0){
             sortList(&tempList, compareByTotalGPA,length);
-            break;
-        case 5:
+        }else if(strcmp(choice, "5") == 0){
             return;
-        default:
-            handleInputError("无效的选项");
-    }
-    displayAllStudents(tempList);//显示排序后的学生信息
+        }
+        displayAllStudents(tempList);//显示排序后的学生信息
+    }while(strcmp(choice, "5") != 0);
+
     freeTmpMemory(&tempList);//释放临时链表的内存
 }
 
@@ -2806,16 +2688,10 @@ void sortByClass(StudentInfo **head){
         handleInputError("班级必须是正整数,请重新输入\n");
         scanf("%d", &classNumber);
     }
-    int choice;
-    printf("请选择排序方式：\n");
-    printf("1. 按学号排序\n");
-    printf("2. 按学业GPA排序\n");
-    printf("3. 按加权平均分排序\n");
-    printf("4. 按照总绩点排序\n");
-    printf("5. 返回\n");
+    char choice[MAX_NAME_LENGTH];
 
-    StudentInfo *tempList = NULL;
     // 创建一个临时链表用于存放按年级筛选的学生
+    StudentInfo *tempList = NULL;
     StudentInfo *current = *head;
     int length = 0;
     while (current != NULL) {
@@ -2832,31 +2708,35 @@ void sortByClass(StudentInfo **head){
         }
         current = current->next;
     }
-    scanf("%d", &choice);
-    //判断输入是否在范围内
-    while (choice < 1 || choice > 5) {
-        handleInputError("输入应是1-5的数字，请重新输入\n");
-        scanf("%d", &choice);
-    }
-    switch (choice) {
-        case 1:
+    do{
+        printf("请选择排序方式：\n");
+        printf("1. 按学号排序\n");
+        printf("2. 按学业GPA排序\n");
+        printf("3. 按加权平均分排序\n");
+        printf("4. 按照总绩点排序\n");
+        printf("5. 返回\n");
+
+
+
+        scanf("%s", choice);
+        //判断输入是否在范围内
+        while (strcmp(choice, "1") != 0 && strcmp(choice, "2") != 0 && strcmp(choice, "3") != 0 && strcmp(choice, "4") != 0 && strcmp(choice, "5") != 0) {
+            handleInputError("选项应在1-5之间，请重新输入：");
+            scanf("%s", choice);
+        }
+        if(strcmp(choice, "1") == 0){
             sortList(&tempList, compareByStudentID,length);
-            break;
-        case 2:
+        }else if(strcmp(choice, "2") == 0){
             sortList(&tempList, compareByGPA,length);
-            break;
-        case 3:
+        }else if(strcmp(choice, "3") == 0){
             sortList(&tempList, compareByAverageScore,length);
-            break;
-        case 4:
+        }else if(strcmp(choice, "4") == 0){
             sortList(&tempList, compareByTotalGPA,length);
-            break;
-        case 5:
+        }else if(strcmp(choice, "5") == 0){
             return;
-        default:
-            handleInputError("无效的选项");
-    }
-    displayAllStudents(tempList);//显示排序后的学生信息
+        }
+        displayAllStudents(tempList);//显示排序后的学生信息
+    }while(strcmp(choice, "5") != 0);
     freeTmpMemory(&tempList);//释放临时链表的内存
 }
 
@@ -3020,7 +2900,6 @@ void freeTmpMemory(StudentInfo **head) {
         currentStudent = currentStudent->next;
         free(tempStudent); // 释放节点内存
     }
-
     // 重置学生列表头指针为NULL
     *head = NULL;
 }

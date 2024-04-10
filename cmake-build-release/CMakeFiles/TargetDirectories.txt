@@ -1,0 +1,3 @@
+C:/Users/17648/Desktop/untitled/cmake-build-release/CMakeFiles/untitled.dir
+C:/Users/17648/Desktop/untitled/cmake-build-release/CMakeFiles/edit_cache.dir
+C:/Users/17648/Desktop/untitled/cmake-build-release/CMakeFiles/rebuild_cache.dir
