@@ -510,8 +510,8 @@ void displayAdminMenu(AdminInfo *admin) {
         printf("请选择操作：");
         scanf("%s", choice);
         //判断选择是否合法
-        while (strcmp(choice, "1") != 0 && strcmp(choice, "2") != 0 && strcmp(choice, "3") != 0 && strcmp(choice, "4") != 0 && strcmp(choice, "5") != 0 && strcmp(choice, "6") != 0 && strcmp(choice, "7") != 0 && strcmp(choice, "8") != 0 && strcmp(choice, "9") != 0 && strcmp(choice, "10") != 0) {
-            handleInputError("选项应为1-10之间的数，请重新输入。\n");
+        while (strcmp(choice, "1") != 0 && strcmp(choice, "2") != 0 && strcmp(choice, "3") != 0 && strcmp(choice, "4") != 0 && strcmp(choice, "5") != 0 && strcmp(choice, "6") != 0 && strcmp(choice, "7") != 0 && strcmp(choice, "8") != 0 && strcmp(choice, "9") != 0 && strcmp(choice, "10") != 0 && strcmp(choice, "11") != 0) {
+            handleInputError("选项应为1-11之间的数，请重新输入。\n");
             scanf("%s", choice);
         }
         if (strcmp(choice, "1") == 0) {
@@ -3128,7 +3128,7 @@ int compareByQualityGPA(const StudentInfo *a, const StudentInfo *b) {
     }
 }
 
-void displayAllQualityProjects(StudentInfo *student){
+void displayAllQualityProjects(StudentInfo *head){
     // 显示所有素质加分项目
     char choice[MAX_NAME_LENGTH];
     do{
@@ -3143,7 +3143,7 @@ void displayAllQualityProjects(StudentInfo *student){
             scanf("%s", choice);
         }
         if (strcmp(choice, "1") == 0) {
-            StudentInfo *currentS = student;
+            StudentInfo *currentS = head;
              while(currentS!=NULL){
                  if(currentS->innovationProjects != NULL) {
                      InnovationProject *current = currentS->innovationProjects;
@@ -3154,7 +3154,7 @@ void displayAllQualityProjects(StudentInfo *student){
                  currentS = currentS->next;//遍历下一个学生
              }
         } else if (strcmp(choice, "2") == 0) {
-            StudentInfo *currentS = student;
+            StudentInfo *currentS = head;
             while(currentS!=NULL){
                 int i = 1;
                 while(currentS->academicPapers != NULL) {
@@ -3170,7 +3170,7 @@ void displayAllQualityProjects(StudentInfo *student){
                 currentS = currentS->next;//遍历下一个学生
             }
         } else if (strcmp(choice, "3") == 0) {
-            StudentInfo *currentS = student;
+            StudentInfo *currentS = head;
             while(currentS!=NULL){
                 int i = 1;
                 while(currentS->competitions != NULL) {
