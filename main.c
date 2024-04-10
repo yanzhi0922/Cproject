@@ -168,6 +168,11 @@ int isRankValid(int rank);//判断获奖等级是否合法
 int isLeaderOrSecondLeaderValid(int isLeaderOrSecondLeader);//判断是否为负责人是否合法
 void calculateJournalLevel(AcademicPaper *paper);//计算学术论文期刊级别
 void freeTmpMemory(StudentInfo **head);//释放临时学生链表内存
+void displayRank(StudentInfo *student);//学生查看年级、班级排名
+void displayClassRank(StudentInfo *student);//学生查看班级排名
+void displayGradeRank(StudentInfo *student);//学生查看年级排名
+int compareByQualityGPA(const StudentInfo *a, const StudentInfo *b);//按素质加分GPA排序
+void displayAllQualityProjects(StudentInfo *head);//显示所有学生的素质加分项目
 
 // 主函数
 int main() {
@@ -216,13 +221,14 @@ void loginSystem() {
 // 学生登录
 void studentLogin() {
     char studentID[STUDENT_ID_LENGTH], password[MAX_PASSWORD_LENGTH];
-    printf("请输入学号和密码：\n");
+    printf("请输入学号：\n");
     scanf("%s", studentID);//输入学号
     //判断学号是否存在
     while (findStudentByID(studentID) == NULL) {
         handleInputError("学号不存在，请重新输入。\n");
         scanf("%s", studentID);
     }
+    printf("请输入密码：\n");
     scanf("%s", password);//输入密码
     //判断密码是否合法
     while (!isPasswordValid(password)) {
@@ -495,11 +501,12 @@ void displayAdminMenu(AdminInfo *admin) {
         printf("3. 编辑学生成绩或删除学生\n");
         printf("4. 按不同要求排序学生\n");
         printf("5. 按不同范围显示学生信息\n");
-        printf("6. 查找学生\n");
-        printf("7. 保存到文件\n");
-        printf("8. 从文件加载\n");
-        printf("9. 更改密码\n");
-        printf("10. 退出\n");
+        printf("6. 显示素质加分项\n");
+        printf("7. 查找学生\n");
+        printf("8. 保存到文件\n");
+        printf("9. 从文件加载\n");
+        printf("10. 更改密码\n");
+        printf("11. 退出\n");
         printf("请选择操作：");
         scanf("%s", choice);
         //判断选择是否合法
@@ -517,7 +524,7 @@ void displayAdminMenu(AdminInfo *admin) {
             sortStudentsMenu();
         } else if (strcmp(choice, "5") == 0) {
             displayStudentMenu();
-        } else if (strcmp(choice, "6") == 0) {
+        } else if (strcmp(choice, "7") == 0) {
             char studentID[STUDENT_ID_LENGTH];
             printf("请输入学生学号: ");
             scanf("%s", studentID);
@@ -528,11 +535,11 @@ void displayAdminMenu(AdminInfo *admin) {
             }
             StudentInfo *student = findStudentByID(studentID);
             displayStudentInfo(student);
-        } else if (strcmp(choice, "7") == 0) {
+        } else if (strcmp(choice, "8") == 0) {
             saveToFile();
-        } else if (strcmp(choice, "8") ==0) {
+        } else if (strcmp(choice, "9") ==0) {
             loadFromFile();
-        } else if (strcmp(choice, "9") == 0) {
+        } else if (strcmp(choice, "10") == 0) {
                 char newPassword[MAX_PASSWORD_LENGTH];
                 printf("请输入新密码：");
                 scanf("%s", newPassword);
@@ -543,10 +550,12 @@ void displayAdminMenu(AdminInfo *admin) {
                 }
                 strcpy(admin->password, newPassword);
                 printf("密码修改成功。\n");
-        } else if (strcmp(choice, "10") == 0) {
+        } else if (strcmp(choice, "11") == 0) {
                 printf("管理员退出登录。\n");
+        }else if (strcmp(choice, "6") == 0) {
+            displayAllQualityProjects(studentsList);
         }
-    } while (strcmp(choice, "10") != 0);
+    } while (strcmp(choice, "11") != 0);
 }
 
 //显示学生菜单
@@ -556,20 +565,21 @@ void displaySelfMenu(StudentInfo *student) {
         printf("学生菜单：\n");
         printf("1. 查看成绩\n");
         printf("2. 查看素质加分项目\n");
-        printf("3. 修改密码\n");
-        printf("4. 退出\n");
+        printf("3. 查看排名\n");
+        printf("4. 修改密码\n");
+        printf("5. 退出\n");
         printf("请选择操作：");
         scanf("%s", choice);
         //判断选择是否合法
-        while (strcmp(choice, "1") != 0 && strcmp(choice, "2") != 0 && strcmp(choice, "3") != 0 && strcmp(choice, "4") != 0) {
-            handleInputError("选项应为1-4之间的数，请重新输入。\n");
+        while (strcmp(choice, "1") != 0 && strcmp(choice, "2") != 0 && strcmp(choice, "3") != 0 && strcmp(choice, "4") != 0 && strcmp(choice, "5") != 0) {
+            handleInputError("选项应为1-5之间的数，请重新输入。\n");
             scanf("%s", choice);
         }
         if (strcmp(choice, "1") == 0) {
             displayAcademicScore(student);//显示学业成绩
         } else if (strcmp(choice, "2") == 0) {
             displayQualityScore(student);//显示素质加分
-        } else if (strcmp(choice, "3") == 0) {
+        } else if (strcmp(choice, "4") == 0) {
             char newPassword[MAX_PASSWORD_LENGTH];
             printf("请输入新密码：");
             scanf("%s", newPassword);
@@ -580,8 +590,10 @@ void displaySelfMenu(StudentInfo *student) {
             }
             strcpy(student->password, newPassword);
             printf("密码修改成功。\n");
-        } else if (strcmp(choice, "4") == 0) {
+        } else if (strcmp(choice, "5") == 0) {
             printf("学生退出登录。\n");
+        }else if(strcmp(choice, "3") == 0){
+            displayRank(student);
         }
     } while (strcmp(choice, "4") != 0);
 }
@@ -1077,7 +1089,6 @@ StudentInfo *findStudentByID(const char *studentID) {
     // 遍历学生列表，查找指定学号的学生
     // 从学生列表的头部开始遍历
     StudentInfo *currentStudent = studentsList;
-
     // 遍历整个学生列表
     while (currentStudent != NULL) {
         // 比较当前学生的学号与给定的学号
@@ -1370,8 +1381,11 @@ void displayAllStudents(StudentInfo *head) {
         printf("学生信息为空。\n");
         return;
     }
+    int rank = 1;
     StudentInfo *current = head;
     while (current != NULL) {
+        printf("学生%d：\n", rank);
+        rank++;
         printf("学号: %s\n", current->studentID);
         printf("姓名: %s\n", current->name);
         printf("年级: %d\n", current->grade);
@@ -1992,7 +2006,10 @@ void displayAcademicPapers(StudentInfo *student) {
         return;
     }
     printf("学术论文：\n");
+    int i = 1;
     while (current != NULL) {
+        printf("论文%d：\n", i);
+        i++;
         printf("论文标题: %s, 期刊类名: %s, 是否第一作者: %d, 期刊级别: %d, 加分: %.2f\n", current->title, current->journalName, current->isFirstAuthor, current->journalLevel, current->gpa);
         current = current->next;
     }
@@ -2012,7 +2029,10 @@ void displayCompetitions(StudentInfo *student) {
         return;
     }
     printf("计算机类学科竞赛：\n");
+    int i = 1;
     while (current != NULL) {
+        printf("竞赛%d：\n", i);
+        i++;
         printf("竞赛名称: %s, 参赛队伍人数: %d, 竞赛级别: %s, 获奖等级: %d, 竞赛类别: %c, 加分: %.2f\n", current->competitionName, current->teamSize, current->competitionLevel, current->rank, current->competitionType, current->gpa);
         current = current->next;
     }
@@ -2541,8 +2561,11 @@ void displayByClass(StudentInfo *head) {
         scanf("%d", &classNumber);
     }
     StudentInfo *current = head;
+    int i = 1;
     while (current != NULL) {
         if (current->classNumber == classNumber && current->grade == grade) {
+            printf("学生%d：\n", i);
+            i++;
             printf("学号: %s, 姓名: %s, 班级: %d\n学业GPA: %f, 已获总学分: %.2f, 素质项目加分GPA: %.2f, 加权平均分: %f, 综合GPA: %.2f\n\n",
                    current->studentID, current->name, current->classNumber, current->gpa, current->totalCredit,
                    current->qualityGpa, current->averageScore, current->totalGPA);
@@ -2595,8 +2618,11 @@ void displayByGrade(StudentInfo *head) {
         scanf("%d", &grade);
     }
     StudentInfo *current = head;
+    int i = 1;
     while (current != NULL) {
         if (current->grade == grade) {
+            printf("学生%d：\n", i);
+            i++;
             printf("学号: %s, 姓名: %s, 班级: %d\n学业GPA: %f, 已获总学分: %.2f, 素质项目加分GPA: %.2f, 加权平均分: %f, 综合GPA: %.2f\n\n",
                    current->studentID, current->name, current->classNumber, current->gpa, current->totalCredit,
                    current->qualityGpa, current->averageScore, current->totalGPA);
@@ -2642,13 +2668,14 @@ void sortByGrade(StudentInfo **head) {
         printf("2. 按学业GPA排序\n");
         printf("3. 按加权平均分排序\n");
         printf("4. 按照总绩点排序\n");
-        printf("5. 返回\n");
+        printf("5. 按照素质项目加分排序\n");
+        printf("6. 返回\n");
 
 
         scanf("%s", choice);
         //判断输入是否在范围内
-        while (strcmp(choice, "1") != 0 && strcmp(choice, "2") != 0 && strcmp(choice, "3") != 0 && strcmp(choice, "4") != 0 && strcmp(choice, "5") != 0) {
-            handleInputError("选项应在1-5之间，请重新输入：");
+        while (strcmp(choice, "1") != 0 && strcmp(choice, "2") != 0 && strcmp(choice, "3") != 0 && strcmp(choice, "4") != 0 && strcmp(choice, "5") != 0 && strcmp(choice, "6") != 0) {
+            handleInputError("选项应在1-6之间，请重新输入：");
             scanf("%s", choice);
         }
         if(strcmp(choice, "1") == 0){
@@ -2659,11 +2686,13 @@ void sortByGrade(StudentInfo **head) {
             sortList(&tempList, compareByAverageScore,length);
         }else if(strcmp(choice, "4") == 0){
             sortList(&tempList, compareByTotalGPA,length);
-        }else if(strcmp(choice, "5") == 0){
+        }else if(strcmp(choice, "6") == 0){
             return;
+        }else if(strcmp(choice, "5") == 0){
+            sortList(&tempList, compareByQualityGPA,length);
         }
         displayAllStudents(tempList);//显示排序后的学生信息
-    }while(strcmp(choice, "5") != 0);
+    }while(strcmp(choice, "6") != 0);
 
     freeTmpMemory(&tempList);//释放临时链表的内存
 }
@@ -2714,14 +2743,13 @@ void sortByClass(StudentInfo **head){
         printf("2. 按学业GPA排序\n");
         printf("3. 按加权平均分排序\n");
         printf("4. 按照总绩点排序\n");
-        printf("5. 返回\n");
-
-
+        printf("5. 按照素质项目加分排序\n");
+        printf("6. 返回\n");
 
         scanf("%s", choice);
         //判断输入是否在范围内
-        while (strcmp(choice, "1") != 0 && strcmp(choice, "2") != 0 && strcmp(choice, "3") != 0 && strcmp(choice, "4") != 0 && strcmp(choice, "5") != 0) {
-            handleInputError("选项应在1-5之间，请重新输入：");
+        while (strcmp(choice, "1") != 0 && strcmp(choice, "2") != 0 && strcmp(choice, "3") != 0 && strcmp(choice, "4") != 0 && strcmp(choice, "5") != 0 && strcmp(choice, "6") != 0) {
+            handleInputError("选项应在1-6之间，请重新输入：");
             scanf("%s", choice);
         }
         if(strcmp(choice, "1") == 0){
@@ -2732,11 +2760,13 @@ void sortByClass(StudentInfo **head){
             sortList(&tempList, compareByAverageScore,length);
         }else if(strcmp(choice, "4") == 0){
             sortList(&tempList, compareByTotalGPA,length);
-        }else if(strcmp(choice, "5") == 0){
+        }else if(strcmp(choice, "6") == 0){
             return;
+        }else if(strcmp(choice, "5") == 0){
+            sortList(&tempList, compareByQualityGPA,length);
         }
         displayAllStudents(tempList);//显示排序后的学生信息
-    }while(strcmp(choice, "5") != 0);
+    }while(strcmp(choice, "6") != 0);
     freeTmpMemory(&tempList);//释放临时链表的内存
 }
 
@@ -2902,4 +2932,260 @@ void freeTmpMemory(StudentInfo **head) {
     }
     // 重置学生列表头指针为NULL
     *head = NULL;
+}
+
+//学生查看年级、班级排名
+void displayRank(StudentInfo *student){
+    // 学生查看年级、班级排名
+    if (student == NULL) {
+        handleInputError("学生信息不能为空。\n");
+        return;
+    }
+    char choice[MAX_NAME_LENGTH];
+    do{
+        printf("1. 查看年级排名\n");
+        printf("2. 查看班级排名\n");
+        printf("3. 返回上一级菜单\n");
+
+        scanf("%s", choice);
+        //判断用户选择并执行相应操作
+        while (strcmp(choice, "1") != 0 && strcmp(choice, "2") != 0 && strcmp(choice, "3") != 0) {
+            handleInputError("选项应在1-3之间，请重新输入：");
+            scanf("%s", choice);
+        }
+        if (strcmp(choice, "1") == 0) {
+            displayGradeRank(student);
+        } else if (strcmp(choice, "2") == 0) {
+            displayClassRank(student);
+        } else if (strcmp(choice, "3") == 0) {
+            return;
+        }
+    }while(strcmp(choice, "3") != 0);
+}
+
+//显示年级排名
+void displayGradeRank(StudentInfo *student){
+    // 显示年级排名
+    if (student == NULL) {
+        handleInputError("学生信息不能为空。\n");
+        return;
+    }
+    int grade;
+    grade=student->grade;
+    StudentInfo *current = studentsList;
+    StudentInfo *gradeList = NULL;
+    int length = 0;
+    while (current != NULL) {
+        if (current->grade == grade) {
+            StudentInfo *newStudent = (StudentInfo *)malloc(sizeof(StudentInfo));
+            if (newStudent == NULL) {
+                handleInputError("内存分配失败");
+                break;
+            }
+            //复制学生信息
+            memcpy(newStudent, current, sizeof(StudentInfo));
+            newStudent->next = NULL;
+            insertStudent(&gradeList, newStudent);//插入学生信息
+            length++;
+        }
+        current = current->next;
+    }
+    char choice[MAX_NAME_LENGTH];
+    do{
+        printf("请选择排序方式：\n");
+        printf("1. 按学业GPA排序\n");
+        printf("2. 按加权平均分排序\n");
+        printf("3. 按照总绩点排序\n");
+        printf("4. 按照素质项目加分排序\n");
+        printf("5. 返回\n");
+
+        scanf("%s", choice);
+        //判断输入是否在范围内
+        while (strcmp(choice, "1") != 0 && strcmp(choice, "2") != 0 && strcmp(choice, "3") != 0 && strcmp(choice, "4") != 0 && strcmp(choice, "5") != 0) {
+            handleInputError("选项应在1-5之间，请重新输入：");
+            scanf("%s", choice);
+        }
+        if(strcmp(choice, "1") == 0){
+            sortList(&gradeList, compareByGPA,length);
+        }else if(strcmp(choice, "2") == 0){
+            sortList(&gradeList, compareByAverageScore,length);
+        }else if(strcmp(choice, "3") == 0){
+            sortList(&gradeList, compareByTotalGPA,length);
+        }else if(strcmp(choice, "5") == 0){
+            return;
+        }else if(strcmp(choice, "4") == 0){
+            sortList(&gradeList, compareByQualityGPA,length);
+        }
+        //遍历排序后的学生信息，得出自己的排名
+        int rank = 1;
+        StudentInfo *currentStudent = gradeList;
+        while (currentStudent != NULL) {
+            if (strcmp(currentStudent->studentID, student->studentID) == 0) {
+                break;
+            }
+            rank++;
+            currentStudent = currentStudent->next;
+        }
+        if(strcmp(choice, "1") != 0){
+            printf("你的年级学业GPA排名是：%d/%d\n", rank, length);
+        } else if(strcmp(choice, "2") != 0){
+            printf("你的年级加权平均分排名是：%d/%d\n", rank, length);
+        } else if(strcmp(choice, "3") != 0){
+            printf("你的年级总绩点排名是：%d/%d\n", rank, length);
+        }else if(strcmp(choice, "4") != 0){
+            printf("你的年级素质项目加分排名是：%d/%d\n", rank, length);
+        }
+    }while(strcmp(choice, "4") != 0);
+
+    freeTmpMemory(&gradeList);//释放内存
+}
+//显示班级排名
+void displayClassRank(StudentInfo *student){
+    // 显示班级排名
+    if (student == NULL) {
+        handleInputError("学生信息不能为空。\n");
+        return;
+    }
+    int grade;
+    grade=student->grade;
+    int classNumber;
+    classNumber=student->classNumber;
+    StudentInfo *current = student;
+    StudentInfo *classList = NULL;
+    int length = 0;
+    while (current != NULL) {
+        if (current->grade == grade && current->classNumber == classNumber) {
+            StudentInfo *newStudent = (StudentInfo *)malloc(sizeof(StudentInfo));
+            if (newStudent == NULL) {
+                handleInputError("内存分配失败");
+                break;
+            }
+            //复制学生信息
+            memcpy(newStudent, current, sizeof(StudentInfo));
+            newStudent->next = NULL;
+            insertStudent(&classList, newStudent);//插入学生信息
+        }
+        current = current->next;
+    }
+    char choice[MAX_NAME_LENGTH];
+    do{
+        printf("请选择排序方式：\n");
+        //printf("1. 按学号排序\n");
+        printf("1. 按学业GPA排序\n");
+        printf("2. 按加权平均分排序\n");
+        printf("3. 按照总绩点排序\n");
+        printf("4. 按照素质项目加分排序\n");
+        printf("5. 返回\n");
+
+        scanf("%s", choice);
+        //判断输入是否在范围内
+        while (strcmp(choice, "1") != 0 && strcmp(choice, "2") != 0 && strcmp(choice, "3") != 0 && strcmp(choice, "4") != 0 && strcmp(choice, "5") != 0) {
+            handleInputError("选项应在1-5之间，请重新输入：");
+            scanf("%s", choice);
+        }
+        if(strcmp(choice, "1") == 0){
+            sortList(&classList, compareByGPA,length);
+        }else if(strcmp(choice, "2") == 0){
+            sortList(&classList, compareByAverageScore,length);
+        }else if(strcmp(choice, "3") == 0){
+            sortList(&classList, compareByTotalGPA,length);
+        }else if(strcmp(choice, "5") == 0){
+            return;
+        }else if(strcmp(choice, "4") == 0){
+            sortList(&classList, compareByQualityGPA,length);
+        }
+        int rank = 1;
+        StudentInfo *currentStudent = classList;
+        while (currentStudent != NULL) {
+            if (strcmp(currentStudent->studentID, student->studentID) == 0) {
+                break;
+            }
+            rank++;
+            currentStudent = currentStudent->next;
+        }
+        //遍历排序后的学生信息，得出自己的排名
+        if(strcmp(choice, "1") != 0){
+            printf("你的班级学业GPA排名是：%d/%d\n", rank, length);
+        } else if(strcmp(choice, "2") != 0){
+            printf("你的班级加权平均分排名是：%d/%d\n", rank, length);
+        } else if(strcmp(choice, "3") != 0){
+            printf("你的班级总绩点排名是：%d/%d\n", rank, length);
+        }else if(strcmp(choice, "4") != 0){
+            printf("你的班级素质项目加分排名是：%d/%d\n", rank, length);
+        }
+    }while(strcmp(choice, "5") != 0);
+
+    freeTmpMemory(&classList);//释放内存
+}
+
+//素质加分GPA比较
+int compareByQualityGPA(const StudentInfo *a, const StudentInfo *b) {
+    // 比较学生的素质加分GPA
+    if (a->qualityGpa < b->qualityGpa) {
+        return 1;
+    } else {
+        return -1;
+    }
+}
+
+void displayAllQualityProjects(StudentInfo *student){
+    // 显示所有素质加分项目
+    char choice[MAX_NAME_LENGTH];
+    do{
+        printf("1. 显示所有大创项目\n");
+        printf("2. 显示所有学术论文\n");
+        printf("3. 显示所有计算机类学科竞赛\n");
+        printf("4. 返回上一级菜单\n");
+        scanf("%s", choice);
+        //判断用户选择并执行相应操作
+        while (strcmp(choice, "1") != 0 && strcmp(choice, "2") != 0 && strcmp(choice, "3") != 0 && strcmp(choice, "4") != 0) {
+            handleInputError("选项应在1-4之间，请重新输入：");
+            scanf("%s", choice);
+        }
+        if (strcmp(choice, "1") == 0) {
+            StudentInfo *currentS = student;
+             while(currentS!=NULL){
+                 if(currentS->innovationProjects != NULL) {
+                     InnovationProject *current = currentS->innovationProjects;
+                     printf("学号: %s, 姓名: %s\n", currentS->studentID, currentS->name);
+                     printf("项目名称: %s, 项目级别: %s, 项目是否结题: %s\n", current->projectName, current->projectLevel, current->isFinished ? "是" : "否");
+                 }
+                 printf("\n");
+                 currentS = currentS->next;//遍历下一个学生
+             }
+        } else if (strcmp(choice, "2") == 0) {
+            StudentInfo *currentS = student;
+            while(currentS!=NULL){
+                int i = 1;
+                while(currentS->academicPapers != NULL) {
+
+                    AcademicPaper *current = currentS->academicPapers;
+
+                    printf("学号: %s, 姓名: %s\n", currentS->studentID, currentS->name);
+                    printf("第%d篇\n", i);
+                    printf("论文标题: %s, 期刊名称: %s, 期刊级别: %d, 是否为第一作者: %s\n", current->title, current->journalName, current->journalLevel, current->isFirstAuthor ? "是" : "否");
+                    currentS->academicPapers = currentS->academicPapers->next;
+                }
+                printf("\n");
+                currentS = currentS->next;//遍历下一个学生
+            }
+        } else if (strcmp(choice, "3") == 0) {
+            StudentInfo *currentS = student;
+            while(currentS!=NULL){
+                int i = 1;
+                while(currentS->competitions != NULL) {
+
+                    Competition *current = currentS->competitions;
+                    printf("学号: %s, 姓名: %s\n", currentS->studentID, currentS->name);
+                    printf("第%d个\n", i);
+                    printf("竞赛名称: %s, 竞赛级别: %s, 竞赛类别: %c, 获奖等级: %d\n", current->competitionName, current->competitionLevel, current->competitionType, current->rank);
+                    currentS->competitions = currentS->competitions->next;
+                }
+                printf("\n");
+                currentS = currentS->next;//遍历下一个学生
+            }
+        } else if (strcmp(choice, "4") == 0) {
+            return;
+        }
+    }while(strcmp(choice, "4") != 0);
 }
