@@ -220,7 +220,7 @@ void loginSystem() {
 
 // 学生登录
 void studentLogin() {
-    char studentID[STUDENT_ID_LENGTH], password[MAX_PASSWORD_LENGTH];
+    char studentID[STUDENT_ID_LENGTH+1], password[MAX_PASSWORD_LENGTH];
     printf("请输入学号：\n");
     scanf("%s", studentID);//输入学号
     //判断学号是否存在
@@ -353,7 +353,7 @@ void addQualityProject(StudentInfo *student) {
 
 // 编辑学生成绩或删除学生
 void modifyScoreMenu() {
-    char studentID[STUDENT_ID_LENGTH];
+    char studentID[STUDENT_ID_LENGTH+1];
     printf("请输入学生学号: ");
     scanf("%s", studentID);
     //判断学号是否合法
@@ -525,7 +525,7 @@ void displayAdminMenu(AdminInfo *admin) {
         } else if (strcmp(choice, "5") == 0) {
             displayStudentMenu();
         } else if (strcmp(choice, "7") == 0) {
-            char studentID[STUDENT_ID_LENGTH];
+            char studentID[STUDENT_ID_LENGTH+1];
             printf("请输入学生学号: ");
             scanf("%s", studentID);
             //判断学号是否合法
