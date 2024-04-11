@@ -595,7 +595,7 @@ void displaySelfMenu(StudentInfo *student) {
         }else if(strcmp(choice, "3") == 0){
             displayRank(student);
         }
-    } while (strcmp(choice, "4") != 0);
+    } while (strcmp(choice, "5") != 0);
 }
 
 // 释放学生内存
