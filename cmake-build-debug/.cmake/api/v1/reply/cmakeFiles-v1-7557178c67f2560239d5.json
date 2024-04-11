@@ -16,12 +16,7 @@
 		},
 		{
 			"isGenerated" : true,
-			"path" : "cmake-build-release/CMakeFiles/3.27.8/CMakeSystem.cmake"
-		},
-		{
-			"isCMake" : true,
-			"isExternal" : true,
-			"path" : "E:/Program Files/CLion 2023.2.2/bin/cmake/win/x64/share/cmake-3.27/Modules/CMakeMinGWFindMake.cmake"
+			"path" : "cmake-build-debug/CMakeFiles/3.27.8/CMakeSystem.cmake"
 		},
 		{
 			"isCMake" : true,
@@ -280,7 +275,7 @@
 		},
 		{
 			"isGenerated" : true,
-			"path" : "cmake-build-release/CMakeFiles/3.27.8/CMakeCCompiler.cmake"
+			"path" : "cmake-build-debug/CMakeFiles/3.27.8/CMakeCCompiler.cmake"
 		},
 		{
 			"isCMake" : true,
@@ -306,21 +301,6 @@
 			"isCMake" : true,
 			"isExternal" : true,
 			"path" : "E:/Program Files/CLion 2023.2.2/bin/cmake/win/x64/share/cmake-3.27/Modules/Platform/WindowsPaths.cmake"
-		},
-		{
-			"isCMake" : true,
-			"isExternal" : true,
-			"path" : "E:/Program Files/CLion 2023.2.2/bin/cmake/win/x64/share/cmake-3.27/Modules/CMakeFindCodeBlocks.cmake"
-		},
-		{
-			"isCMake" : true,
-			"isExternal" : true,
-			"path" : "E:/Program Files/CLion 2023.2.2/bin/cmake/win/x64/share/cmake-3.27/Modules/CMakeExtraGeneratorDetermineCompilerMacrosAndIncludeDirs.cmake"
-		},
-		{
-			"isCMake" : true,
-			"isExternal" : true,
-			"path" : "E:/Program Files/CLion 2023.2.2/bin/cmake/win/x64/share/cmake-3.27/Modules/ProcessorCount.cmake"
 		},
 		{
 			"isCMake" : true,
@@ -369,7 +349,7 @@
 		},
 		{
 			"isGenerated" : true,
-			"path" : "cmake-build-release/CMakeFiles/3.27.8/CMakeRCCompiler.cmake"
+			"path" : "cmake-build-debug/CMakeFiles/3.27.8/CMakeRCCompiler.cmake"
 		},
 		{
 			"isCMake" : true,
@@ -448,7 +428,7 @@
 		},
 		{
 			"isGenerated" : true,
-			"path" : "cmake-build-release/CMakeFiles/3.27.8/CMakeCCompiler.cmake"
+			"path" : "cmake-build-debug/CMakeFiles/3.27.8/CMakeCCompiler.cmake"
 		},
 		{
 			"isCMake" : true,
@@ -459,7 +439,7 @@
 	"kind" : "cmakeFiles",
 	"paths" : 
 	{
-		"build" : "C:/Users/17648/Desktop/untitled/cmake-build-release",
+		"build" : "C:/Users/17648/Desktop/untitled/cmake-build-debug",
 		"source" : "C:/Users/17648/Desktop/untitled"
 	},
 	"version" : 
